@@ -1,0 +1,232 @@
+/* ==========================================================================
+   AVI-CENNA — DESIGN TOKENS  ("the admin CSS")
+   --------------------------------------------------------------------------
+   This is the ONE file you edit to restyle the entire site.
+   Nothing in any component hardcodes a colour, radius, shadow or easing —
+   everything reads from the tokens below via Tailwind utilities.
+
+   Change a value here  ->  every section updates.
+
+     --color-brand-*     the school blue, light (50) to deep navy (950)
+     --color-accent-*    the warm coral used for primary calls-to-action
+     --color-gold-*      crest / accreditation accents
+     --color-surface-*   page and card backgrounds
+     --color-ink-*       text colours
+
+   Usage in markup:  bg-surface-alt  text-ink  rounded-card  ease-out-expo
+   ========================================================================== */
+
+@theme {
+  /* ---------------------------------------------------------------- BRAND */
+  /* The school blue. --color-brand-500 is the blue from the current site. */
+  --color-brand-50: #f0f7fd;
+  --color-brand-100: #dcedfb;
+  --color-brand-200: #bcdcf7;
+  --color-brand-300: #8fc6f0;
+  --color-brand-400: #62ace6;
+  --color-brand-500: #4a90d0;
+  --color-brand-600: #3a76b4;
+  --color-brand-700: #305e91;
+  --color-brand-800: #274b74;
+  --color-brand-900: #10365c;
+  --color-brand-950: #0a2440;
+
+  /* --------------------------------------------------------------- ACCENT */
+  /* Warm coral, carried over from the current site's "Virtual Tour" button. */
+  --color-accent-100: #ffe7e0;
+  --color-accent-200: #ffc9b9;
+  --color-accent-300: #ffab93;
+  --color-accent-400: #f78f70;
+  --color-accent-500: #f2795c;
+  --color-accent-600: #dd5f42;
+  --color-accent-700: #b84930;
+
+  /* ----------------------------------------------------------------- GOLD */
+  --color-gold-300: #f3d79a;
+  --color-gold-400: #e8bd63;
+  --color-gold-500: #e0a33c;
+  --color-gold-600: #c1852a;
+
+  /* ------------------------------------------------------------- SURFACES */
+  --color-surface: #ffffff; /* cards, header                        */
+  --color-surface-alt: #eef5fb; /* the light blue page background       */
+  --color-surface-tint: #f7fbfe; /* barely-there blue, for soft banding  */
+  --color-surface-deep: #10365c; /* the navy panel                       */
+
+  /* ------------------------------------------------------------------ INK */
+  --color-ink: #10365c; /* headings                             */
+  --color-ink-body: #46586e; /* paragraphs                           */
+  --color-ink-muted: #7b8ba0; /* captions, meta                       */
+  --color-ink-invert: #ffffff; /* text on navy / brand                 */
+  --color-ink-invert-soft: #b9d3ea; /* secondary text on navy               */
+
+  /* ------------------------------------------------------------- TYPEFACE */
+  /* One family across the whole site — Plus Jakarta Sans — differentiated by
+     weight and tracking rather than by mixing families. Wired to next/font in
+     app/layout.tsx; swap the import there to change it everywhere. */
+  --font-sans: var(--font-jakarta), ui-sans-serif, system-ui, sans-serif;
+  --font-display: var(--font-jakarta), ui-sans-serif, system-ui, sans-serif;
+
+  /* --------------------------------------------------------------- RADIUS */
+  --radius-pill: 9999px;
+  --radius-card: 1.25rem; /* 20px — standard card                        */
+  --radius-panel: 2rem; /* 32px — the big navy panel, hero image        */
+  --radius-blob: 4rem;
+
+  /* -------------------------------------------------------------- SHADOWS */
+  --shadow-soft: 0 2px 8px -2px rgb(16 54 92 / 0.06), 0 8px 24px -8px rgb(16 54 92 / 0.1);
+  --shadow-card: 0 4px 12px -4px rgb(16 54 92 / 0.08), 0 16px 40px -16px rgb(16 54 92 / 0.14);
+  --shadow-lift: 0 8px 20px -6px rgb(16 54 92 / 0.14), 0 28px 60px -20px rgb(16 54 92 / 0.22);
+  --shadow-glow: 0 12px 40px -12px rgb(74 144 208 / 0.55);
+
+  /* --------------------------------------------------------------- MOTION */
+  --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-out-back: cubic-bezier(0.34, 1.4, 0.64, 1);
+  --ease-in-out-soft: cubic-bezier(0.65, 0, 0.35, 1);
+
+  --duration-fast: 180ms;
+  --duration-base: 320ms;
+  --duration-slow: 620ms;
+
+  /* ------------------------------------------------------------ TYPE SIZE */
+  /* Fluid display sizes — no media queries needed at the call site.        */
+  --text-display-sm: clamp(2rem, 1.4rem + 2.4vw, 3rem);
+  --text-display-sm--line-height: 1.08;
+  --text-display: clamp(2.5rem, 1.5rem + 4vw, 4.5rem);
+  --text-display--line-height: 1.02;
+  --text-display-lg: clamp(3rem, 1.6rem + 5.6vw, 5.75rem);
+  --text-display-lg--line-height: 0.98;
+
+  /* ------------------------------------------------------------- SPACING */
+  --spacing-section: clamp(4rem, 2rem + 7vw, 8rem); /* vertical section rhythm */
+  --spacing-gutter: clamp(1.25rem, 0.5rem + 3vw, 3.5rem);
+}
+
+/* ==========================================================================
+   PAGE SHELL
+   ========================================================================== */
+
+:root {
+  color-scheme: light; /* single theme by design — no switcher */
+  --shell-max: 82rem; /* content max width                    */
+  --header-h: 4.75rem;
+}
+
+html {
+  -webkit-tap-highlight-color: transparent;
+
+  /* Always reserve the scrollbar gutter, whether or not a scrollbar is showing.
+     Without this the page jumps sideways every time the nav overlay opens:
+     the overlay locks scrolling, the scrollbar disappears, the viewport gets
+     ~15px wider and every centred element shifts. Reserving the space up front
+     means locking and unlocking scroll changes nothing about the layout. */
+  scrollbar-gutter: stable;
+}
+
+body {
+  background-color: var(--color-surface);
+  color: var(--color-ink-body);
+  font-family: var(--font-sans);
+  font-synthesis-weight: none;
+  text-rendering: optimizeLegibility;
+}
+
+::selection {
+  background-color: var(--color-brand-500);
+  color: #fff;
+}
+
+/* Lenis smooth scroll — required by the library. */
+html.lenis,
+html.lenis body {
+  height: auto;
+}
+.lenis.lenis-smooth {
+  scroll-behavior: auto !important;
+}
+.lenis.lenis-stopped {
+  overflow: hidden;
+}
+
+/* Respect the OS setting: Lenis and every GSAP tween is disabled in JS too. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* ==========================================================================
+   SHARED UTILITIES
+   ========================================================================== */
+
+/* Page gutter + max width, used by every section. */
+@utility shell {
+  width: 100%;
+  max-width: var(--shell-max);
+  margin-inline: auto;
+  padding-inline: var(--spacing-gutter);
+}
+
+/* The organic squircle used for hero imagery. */
+@utility blob-mask {
+  border-radius: 58% 42% 52% 48% / 46% 54% 46% 54%;
+}
+
+@utility blob-mask-alt {
+  border-radius: 44% 56% 46% 54% / 56% 44% 56% 44%;
+}
+
+/* Focus ring, consistent everywhere. */
+@utility focus-ring {
+  &:focus-visible {
+    outline: 2px solid var(--color-brand-500);
+    outline-offset: 3px;
+    border-radius: var(--radius-pill);
+  }
+}
+
+/* Elements GSAP will reveal: hidden until the tween runs, but visible if JS
+   never loads or motion is reduced. */
+@utility will-reveal {
+  opacity: 1;
+}
+
+/* ==========================================================================
+   MARQUEE
+   --------------------------------------------------------------------------
+   The track holds the logo list TWICE, so translating it by exactly -50%
+   lands the second copy precisely where the first began — the loop is
+   seamless with no JS and no measuring.
+   ========================================================================== */
+
+@keyframes marquee-x {
+  from {
+    transform: translate3d(0, 0, 0);
+  }
+  to {
+    transform: translate3d(-50%, 0, 0);
+  }
+}
+
+.marquee-track {
+  animation: marquee-x var(--marquee-duration, 34s) linear infinite;
+  /* Promote to its own layer so the loop is composited, not repainted. */
+  will-change: transform;
+}
+
+/* Pause when someone hovers the lane, so a logo can actually be looked at. */
+.marquee:hover .marquee-track,
+.marquee:focus-within .marquee-track {
+  animation-play-state: paused;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .marquee-track {
+    animation: none;
+  }
+}
