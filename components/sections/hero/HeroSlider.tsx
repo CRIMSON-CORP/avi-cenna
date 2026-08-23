@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import Image from "next/image";
-import { gsap, SplitText } from "@/lib/gsap";
+import { gsap, SplitText, useIsomorphicLayoutEffect } from "@/lib/gsap";
 import { BLOB_ASPECT, INITIAL_BLOB_PATH, pathFromCoords, shapeFor, SLIDE_SHAPES } from "@/lib/blob";
 import { slides } from "@/lib/site";
 import { cn } from "@/lib/utils";
@@ -14,6 +14,43 @@ import { Doodles } from "./Doodles";
 const AUTOPLAY_MS = 7200;
 const RING_R = 15;
 const RING_C = 2 * Math.PI * RING_R;
+/** Longest we will wait on the webfont before starting the entrance anyway. */
+const FONT_TIMEOUT_MS = 1200;
+
+/* ---------------------------------------------------- pre-hydration state --
+   The entrance cannot exist in the markup: SplitText needs a laid-out DOM
+   before it can wrap each line in its clipping box, so the "before" frame is
+   only buildable in JS. But the server still ships HTML, and the browser
+   paints it as soon as it arrives — long before the bundle has hydrated. Left
+   to itself that first paint is all three slides stacked in one grid cell,
+   fully composed, which is exactly the flash being fixed here.
+
+   So the hidden state ships as inline style, in the same properties GSAP will
+   later write. React only rewrites a style property whose *prop* changed
+   between renders, and these are derived from the slide index rather than the
+   active one, so re-rendering on a slide change never claws anything back off
+   GSAP. `visibility` rather than `display`, so the elements keep their layout
+   and SplitText can still measure where the lines break. */
+const HIDDEN_COPY: React.CSSProperties = { opacity: 0, visibility: "hidden" };
+
+/** Matches the `from` of the first photo's reveal, so JS has nothing to undo. */
+const FIRST_PHOTO: React.CSSProperties = {
+  opacity: 1,
+  visibility: "visible",
+  zIndex: 2,
+  clipPath: "inset(0% 0% 0% 100%)",
+};
+const HIDDEN_PHOTO: React.CSSProperties = { opacity: 0, visibility: "hidden", zIndex: 0 };
+
+/* Scripting off means none of the above is ever undone, so hand that reader a
+   composed first slide instead of an empty hero. */
+const NOSCRIPT_CSS = `<style>
+  [data-hero-copy="0"], [data-hero-photo="0"] {
+    opacity: 1 !important;
+    visibility: visible !important;
+    clip-path: none !important;
+  }
+</style>`;
 
 /**
  * The hero.
@@ -197,94 +234,119 @@ export function HeroSlider() {
     goRelativeRef.current = goRelative;
   }, [goRelative]);
 
-  useEffect(() => {
-    reduced.current = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-  }, []);
-
   /* --------------------------------------------------------------- mount -- */
 
-  useEffect(() => {
-    const ctx = gsap.context(() => {
-      /* Headlines split to masked words, bodies to masked lines — the same
-         clipping mechanic at two scales, so the column reads as one system. */
-      headSplits.current = headingRefs.current.filter(Boolean).map((el) =>
-        SplitText.create(el as HTMLHeadingElement, {
-          type: "lines,words",
-          mask: "lines",
-          autoSplit: true,
-          aria: "auto",
-          wordsClass: "word",
-        }),
-      );
-      bodySplits.current = bodyRefs.current.filter(Boolean).map((el) =>
-        SplitText.create(el as HTMLParagraphElement, {
-          type: "lines",
-          mask: "lines",
-          autoSplit: true,
-          aria: "auto",
-        }),
-      );
+  useIsomorphicLayoutEffect(() => {
+    reduced.current = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
-      textRefs.current.forEach((el, i) => gsap.set(el, { autoAlpha: i === 0 ? 1 : 0 }));
-      imageRefs.current.forEach((el, i) =>
-        gsap.set(el, {
-          autoAlpha: i === 0 ? 1 : 0,
-          zIndex: i === 0 ? 2 : 0,
-          clipPath: "inset(0% 0% 0% 0%)",
-        }),
-      );
+    let ctx: ReturnType<typeof gsap.context> | undefined;
+    let cancelled = false;
 
-      if (reduced.current) return;
+    const build = () => {
+      if (cancelled) return;
 
-      const first = textRefs.current[0];
-      gsap
-        .timeline()
-        .fromTo(
-          headSplits.current[0]?.words ?? [],
-          { yPercent: 114 },
-          { yPercent: 0, duration: 1.25, stagger: 0.08, ease: "swoop" },
-          0.15,
-        )
-        .fromTo(
-          bodySplits.current[0]?.lines ?? [],
-          { yPercent: 110 },
-          { yPercent: 0, duration: 0.7, stagger: 0.08, ease: "swoop" },
-          0.5,
-        )
-        .fromTo(
-          first?.querySelectorAll("[data-fade]") ?? [],
-          { y: 22, autoAlpha: 0 },
-          { y: 0, autoAlpha: 1, duration: 0.8, stagger: 0.09, ease: "swoop" },
-          0.4,
-        )
-        .fromTo(
-          first?.querySelectorAll("[data-underline]") ?? [],
-          { drawSVG: "0%" },
-          { drawSVG: "100%", duration: 0.8, ease: "power2.out" },
-          1.05,
-        )
-        .fromTo(
-          imageRefs.current[0],
-          { clipPath: "inset(0% 0% 0% 100%)" },
-          { clipPath: "inset(0% 0% 0% 0%)", duration: 1.35, ease: "expo.inOut" },
-          0.1,
-        )
-        .fromTo(
-          imageRefs.current[0]?.querySelector("[data-photo]") ?? [],
-          { scale: 1.22 },
-          { scale: 1, duration: 1.6, ease: "swoop" },
-          0.1,
+      ctx = gsap.context(() => {
+        /* Headlines split to masked words, bodies to masked lines — the same
+           clipping mechanic at two scales, so the column reads as one system. */
+        headSplits.current = headingRefs.current.filter(Boolean).map((el) =>
+          SplitText.create(el as HTMLHeadingElement, {
+            type: "lines,words",
+            mask: "lines",
+            autoSplit: true,
+            aria: "auto",
+            wordsClass: "word",
+          }),
+        );
+        bodySplits.current = bodyRefs.current.filter(Boolean).map((el) =>
+          SplitText.create(el as HTMLParagraphElement, {
+            type: "lines",
+            mask: "lines",
+            autoSplit: true,
+            aria: "auto",
+          }),
         );
 
-      /* The white accent curve sketches itself on over the photo. */
-      gsap.fromTo(
-        "[data-draw-curve]",
-        { drawSVG: "0%" },
-        { drawSVG: "100%", duration: 1.1, delay: 0.9, ease: "power2.inOut" },
-      );
-    }, rootRef);
+        /* Takes the elements off the inline hidden state they were served in.
+           Everything below runs in one synchronous block, so the from-states
+           are in place before the browser gets another chance to paint. */
+        textRefs.current.forEach((el, i) => gsap.set(el, { autoAlpha: i === 0 ? 1 : 0 }));
+        imageRefs.current.forEach((el, i) =>
+          gsap.set(el, {
+            autoAlpha: i === 0 ? 1 : 0,
+            zIndex: i === 0 ? 2 : 0,
+            clipPath: "inset(0% 0% 0% 0%)",
+          }),
+        );
 
-    startAutoplay();
+        if (reduced.current) return;
+
+        const first = textRefs.current[0];
+        gsap
+          .timeline()
+          .fromTo(
+            headSplits.current[0]?.words ?? [],
+            { yPercent: 114 },
+            { yPercent: 0, duration: 1.25, stagger: 0.08, ease: "swoop" },
+            0.15,
+          )
+          .fromTo(
+            bodySplits.current[0]?.lines ?? [],
+            { yPercent: 110 },
+            { yPercent: 0, duration: 0.7, stagger: 0.08, ease: "swoop" },
+            0.5,
+          )
+          .fromTo(
+            first?.querySelectorAll("[data-fade]") ?? [],
+            { y: 22, autoAlpha: 0 },
+            { y: 0, autoAlpha: 1, duration: 0.8, stagger: 0.09, ease: "swoop" },
+            0.4,
+          )
+          .fromTo(
+            first?.querySelectorAll("[data-underline]") ?? [],
+            { drawSVG: "0%" },
+            { drawSVG: "100%", duration: 0.8, ease: "power2.out" },
+            1.05,
+          )
+          .fromTo(
+            imageRefs.current[0],
+            { clipPath: "inset(0% 0% 0% 100%)" },
+            { clipPath: "inset(0% 0% 0% 0%)", duration: 1.35, ease: "expo.inOut" },
+            0.1,
+          )
+          .fromTo(
+            imageRefs.current[0]?.querySelector("[data-photo]") ?? [],
+            { scale: 1.22 },
+            { scale: 1, duration: 1.6, ease: "swoop" },
+            0.1,
+          );
+
+        /* The white accent curve sketches itself on over the photo. */
+        gsap.fromTo(
+          "[data-draw-curve]",
+          { drawSVG: "0%" },
+          { drawSVG: "100%", duration: 1.1, delay: 0.9, ease: "power2.inOut" },
+        );
+      }, rootRef);
+
+      startAutoplay();
+    };
+
+    /* SplitText records where the lines break, so it has to measure against
+       the real display font. `display: "swap"` lets the fallback paint first;
+       splitting against that and letting `autoSplit` re-split on the swap
+       would revert the very wrappers the entrance is driving, and the copy
+       would snap into place mid-reveal. The font is preloaded, so this is
+       normally already settled and `build` runs synchronously — the timeout is
+       only there so a font that never resolves cannot leave the hero hidden
+       for good. */
+    if (document.fonts && document.fonts.status !== "loaded") {
+      Promise.race([
+        document.fonts.ready,
+        new Promise((resolve) => setTimeout(resolve, FONT_TIMEOUT_MS)),
+      ]).then(build);
+    } else {
+      build();
+    }
 
     const onVisibility = () => {
       if (document.hidden) autoplayRef.current?.pause();
@@ -293,13 +355,14 @@ export function HeroSlider() {
     document.addEventListener("visibilitychange", onVisibility);
 
     return () => {
+      cancelled = true;
       document.removeEventListener("visibilitychange", onVisibility);
       autoplayRef.current?.kill();
       headSplits.current.forEach((s) => s.revert());
       bodySplits.current.forEach((s) => s.revert());
       headSplits.current = [];
       bodySplits.current = [];
-      ctx.revert();
+      ctx?.revert();
     };
   }, [startAutoplay]);
 
@@ -317,6 +380,8 @@ export function HeroSlider() {
       onMouseEnter={() => autoplayRef.current?.pause()}
       onMouseLeave={() => autoplayRef.current?.play()}
     >
+      <noscript dangerouslySetInnerHTML={{ __html: NOSCRIPT_CSS }} />
+
       <Aurora />
 
       {/* The mask. Authored in 0–1 bounding-box units and rewritten each frame. */}
@@ -363,9 +428,11 @@ export function HeroSlider() {
               {slides.map((slide, i) => (
                 <div
                   key={slide.id}
+                  data-hero-photo={i}
                   ref={(el) => {
                     imageRefs.current[i] = el;
                   }}
+                  style={i === 0 ? FIRST_PHOTO : HIDDEN_PHOTO}
                   className="absolute inset-0 overflow-hidden"
                 >
                   <div data-photo className="relative h-full w-full will-change-transform">
@@ -420,9 +487,11 @@ export function HeroSlider() {
             {slides.map((slide, i) => (
               <div
                 key={slide.id}
+                data-hero-copy={i}
                 ref={(el) => {
                   textRefs.current[i] = el;
                 }}
+                style={HIDDEN_COPY}
                 className="col-start-1 row-start-1"
                 aria-hidden={index !== i}
                 inert={index !== i}
