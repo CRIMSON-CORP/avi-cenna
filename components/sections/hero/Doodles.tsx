@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useRef } from "react";
-import { gsap } from "@/lib/gsap";
+import { useRef } from "react";
+import { gsap, useIsomorphicLayoutEffect } from "@/lib/gsap";
 
 /**
  * The hand-drawn graphic layer.
@@ -14,34 +14,34 @@ import { gsap } from "@/lib/gsap";
  * Three depth planes parallax against the pointer at different rates, which is
  * what stops the composition reading as a flat sticker sheet.
  *
- *   data-draw      → stroke draws on at mount
+ * The *entrance* is not here: HeroSlider runs one timeline for the whole
+ * section, so the doodles arrive in step with the photo and the copy instead of
+ * on a delay of their own that could only ever be guessed. What this file owns
+ * is the idle life that runs forever afterwards. The attributes below are the
+ * contract between the two:
+ *
+ *   data-doodle    → one graphic; the hero's entrance reveals these
+ *   data-enter     → held out of the first paint (see theme.css)
+ *   data-draw      → a stroke for the hero's entrance to sketch on
  *   data-float     → idle bob / sway, seeded per element
  *   data-twinkle   → scale + opacity pulse
  *   data-depth     → parallax strength (higher = moves further)
+ *
+ * The idle loops start at mount, while the doodles are still behind the
+ * curtain, and they only touch properties the entrance leaves alone — the
+ * entrance fades and scales the wrapper, these drive transforms on it and
+ * opacity on the child. So a doodle is already mid-bob by the time it appears,
+ * which is what keeps the layer from looking like it settles all at once.
  */
 export function Doodles({ className }: { className?: string }) {
   const scope = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
+  useIsomorphicLayoutEffect(() => {
     if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
     const root = scope.current;
     if (!root) return;
 
     const ctx = gsap.context(() => {
-      /* ---------------------------------------------- draw the strokes --- */
-      /* DrawSVG handles the dash maths, so each doodle sketches itself on. */
-      gsap.fromTo(
-        "[data-draw]",
-        { drawSVG: "0%" },
-        {
-          drawSVG: "100%",
-          duration: 1.2,
-          stagger: 0.14,
-          delay: 0.5,
-          ease: "power2.inOut",
-        },
-      );
-
       /* ------------------------------------------------------ idle life --- */
       gsap.utils.toArray<HTMLElement>("[data-float]").forEach((el, i) => {
         const drift = 6 + (i % 4) * 3;
@@ -129,7 +129,13 @@ export function Doodles({ className }: { className?: string }) {
           than as scatter across an empty background. */}
 
       {/* dotted matrix, tucked into the blob's upper-left shoulder */}
-      <div data-depth="0.5" data-float className="absolute right-[4%] top-[5%] hidden lg:block">
+      <div
+        data-doodle
+        data-enter
+        data-depth="0.5"
+        data-float
+        className="absolute right-[4%] top-[5%] hidden lg:block"
+      >
         <svg width="172" height="116" viewBox="0 0 86 58" className="text-brand-300/80">
           {Array.from({ length: 4 }).map((_, row) =>
             Array.from({ length: 6 }).map((__, col) => (
@@ -146,9 +152,16 @@ export function Doodles({ className }: { className?: string }) {
       </div>
 
       {/* concentric orbit ring */}
-      <div data-depth="0.9" className="absolute right-[15%] top-[3%] hidden opacity-70 lg:block">
+      <div
+        data-doodle
+        data-enter
+        data-depth="0.9"
+        className="absolute right-[15%] top-[3%] hidden lg:block"
+      >
         <div data-spin>
-          <svg width="72" height="72" viewBox="0 0 72 72" className="text-accent-300">
+          {/* the wrapper's own opacity belongs to the entrance, so this one
+              sits on the artwork instead */}
+          <svg width="72" height="72" viewBox="0 0 72 72" className="text-accent-300 opacity-70">
             <circle
               cx="36"
               cy="36"
@@ -166,7 +179,13 @@ export function Doodles({ className }: { className?: string }) {
       {/* ---------------------------------------------------- mid plane ---- */}
 
       {/* the squiggle arrow, aimed from the copy toward the photo */}
-      <div data-depth="1.4" data-float className="absolute left-[50%] top-[40%] hidden xl:block">
+      <div
+        data-doodle
+        data-enter
+        data-depth="1.4"
+        data-float
+        className="absolute left-[50%] top-[40%] hidden xl:block"
+      >
         <svg width="132" height="72" viewBox="0 0 132 72" className="text-brand-500">
           <path
             data-draw
@@ -187,6 +206,8 @@ export function Doodles({ className }: { className?: string }) {
 
       {/* saturn, sitting above the blob */}
       <div
+        data-doodle
+        data-enter
         data-depth="1.8"
         data-float
         className="absolute right-[26%] top-[4%] sm:right-[30%] lg:right-[30%] lg:top-[4%]"
@@ -209,6 +230,8 @@ export function Doodles({ className }: { className?: string }) {
 
       {/* loop-de-loop scribble, lower left of the blob */}
       <div
+        data-doodle
+        data-enter
         data-depth="1.2"
         data-float
         className="absolute bottom-[16%] right-[40%] hidden lg:block"
@@ -226,11 +249,13 @@ export function Doodles({ className }: { className?: string }) {
 
       {/* hand-drawn spiral */}
       <div
+        data-doodle
+        data-enter
         data-depth="1.1"
         data-float
-        className="absolute bottom-[10%] right-[30%] hidden opacity-80 lg:block"
+        className="absolute bottom-[10%] right-[30%] hidden lg:block"
       >
-        <svg width="54" height="54" viewBox="0 0 54 54" className="text-brand-400">
+        <svg width="54" height="54" viewBox="0 0 54 54" className="text-brand-400 opacity-80">
           <path
             data-draw
             d="M27 27c0-5 6-8 10-5 5 4 3 13-4 16-9 4-20-2-22-12C9 13 22 3 35 5c15 2 24 16 22 30"
@@ -263,11 +288,15 @@ export function Doodles({ className }: { className?: string }) {
 
       {/* small solid dots for punctuation */}
       <span
+        data-doodle
+        data-enter
         data-depth="2.8"
         data-float
         className="absolute left-[45%] top-[40%] hidden h-3 w-3 rounded-full bg-accent-500/80 lg:block"
       />
       <span
+        data-doodle
+        data-enter
         data-depth="2.4"
         data-float
         className="absolute bottom-[28%] right-[44%] hidden h-2.5 w-2.5 rounded-full bg-brand-500/70 lg:block"
@@ -278,7 +307,7 @@ export function Doodles({ className }: { className?: string }) {
 
 function Sparkle({ className, size, depth }: { className?: string; size: number; depth: string }) {
   return (
-    <div data-depth={depth} className={className}>
+    <div data-doodle data-enter data-depth={depth} className={className}>
       <div data-twinkle>
         <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor">
           {/* four-point star with concave sides — the classic doodle sparkle */}

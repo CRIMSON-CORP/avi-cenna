@@ -190,10 +190,30 @@ html.lenis body {
   }
 }
 
-/* Elements GSAP will reveal: hidden until the tween runs, but visible if JS
-   never loads or motion is reduced. */
-@utility will-reveal {
-  opacity: 1;
+/* ==========================================================================
+   HERO ENTRANCE
+   --------------------------------------------------------------------------
+   The hero's entrance can only be built in JS: SplitText needs a laid-out DOM
+   before it can wrap each line, and DrawSVG has to measure a stroke before it
+   can un-draw it. The server still ships HTML though, and the browser paints
+   it the moment it lands — long before the bundle has hydrated. Left alone,
+   that first paint is the finished composition, every doodle and shape already
+   sitting there, which then snaps back to nothing as the timeline takes over.
+
+   So the "before" frame ships in the markup: the section is served
+   data-hero-stage="pending", and everything the entrance drives carries
+   data-enter. The rule below holds those out of the first paint. The mount
+   layout effect writes GSAP's own inline from-states and only then drops the
+   attribute, in one synchronous block — so this rule stops applying at exactly
+   the moment inline styles have taken the job over, and nothing flashes.
+
+   visibility rather than display: the elements keep their layout, so SplitText
+   can still measure where the lines break from behind the curtain.
+   ========================================================================== */
+
+[data-hero-stage="pending"] [data-enter] {
+  opacity: 0;
+  visibility: hidden;
 }
 
 /* ==========================================================================

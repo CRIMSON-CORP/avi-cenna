@@ -18,19 +18,18 @@ const RING_C = 2 * Math.PI * RING_R;
 const FONT_TIMEOUT_MS = 1200;
 
 /* ---------------------------------------------------- pre-hydration state --
-   The entrance cannot exist in the markup: SplitText needs a laid-out DOM
-   before it can wrap each line in its clipping box, so the "before" frame is
-   only buildable in JS. But the server still ships HTML, and the browser
-   paints it as soon as it arrives — long before the bundle has hydrated. Left
-   to itself that first paint is all three slides stacked in one grid cell,
-   fully composed, which is exactly the flash being fixed here.
+   Most of the section is held out of the first paint by one stylesheet rule —
+   see HERO ENTRANCE in app/styles/theme.css, which hides anything marked
+   [data-enter] for as long as the section is [data-hero-stage="pending"].
 
-   So the hidden state ships as inline style, in the same properties GSAP will
-   later write. React only rewrites a style property whose *prop* changed
-   between renders, and these are derived from the slide index rather than the
-   active one, so re-rendering on a slide change never claws anything back off
-   GSAP. `visibility` rather than `display`, so the elements keep their layout
-   and SplitText can still measure where the lines break. */
+   The slides are the exception and ship their state per element, because a
+   slide is hidden for two different reasons — it is either waiting on the
+   entrance or simply not the current slide — and the photo's from-state
+   carries a clip on top of that. React only rewrites a style property whose
+   *prop* changed between renders, and these derive from the slide index
+   rather than the active one, so re-rendering on a slide change never claws
+   anything back off GSAP. `visibility` rather than `display`, so the elements
+   keep their layout and SplitText can still measure where the lines break. */
 const HIDDEN_COPY: React.CSSProperties = { opacity: 0, visibility: "hidden" };
 
 /** Matches the `from` of the first photo's reveal, so JS has nothing to undo. */
@@ -45,6 +44,7 @@ const HIDDEN_PHOTO: React.CSSProperties = { opacity: 0, visibility: "hidden", zI
 /* Scripting off means none of the above is ever undone, so hand that reader a
    composed first slide instead of an empty hero. */
 const NOSCRIPT_CSS = `<style>
+  [data-hero-stage] [data-enter] { opacity: 1 !important; visibility: visible !important; }
   [data-hero-copy="0"], [data-hero-photo="0"] {
     opacity: 1 !important;
     visibility: visible !important;
@@ -246,6 +246,10 @@ export function HeroSlider() {
       if (cancelled) return;
 
       ctx = gsap.context(() => {
+        const root = rootRef.current;
+        if (!root) return;
+        const find = (selector: string) => Array.from(root.querySelectorAll(selector));
+
         /* Headlines split to masked words, bodies to masked lines — the same
            clipping mechanic at two scales, so the column reads as one system. */
         headSplits.current = headingRefs.current.filter(Boolean).map((el) =>
@@ -266,9 +270,13 @@ export function HeroSlider() {
           }),
         );
 
-        /* Takes the elements off the inline hidden state they were served in.
-           Everything below runs in one synchronous block, so the from-states
-           are in place before the browser gets another chance to paint. */
+        /* Hands the curtain over from the stylesheet to GSAP: everything the
+           entrance drives gets its hidden state written as its own inline
+           style, and only once that is done does the attribute holding the
+           stylesheet rule come off. Nothing yields between here and the end of
+           this function, so the browser's next paint is already frame one of
+           the entrance rather than anything half-assembled. */
+        gsap.set(find("[data-enter]"), { autoAlpha: reduced.current ? 1 : 0 });
         textRefs.current.forEach((el, i) => gsap.set(el, { autoAlpha: i === 0 ? 1 : 0 }));
         imageRefs.current.forEach((el, i) =>
           gsap.set(el, {
@@ -277,36 +285,28 @@ export function HeroSlider() {
             clipPath: "inset(0% 0% 0% 0%)",
           }),
         );
+        root.removeAttribute("data-hero-stage");
 
         if (reduced.current) return;
 
         const first = textRefs.current[0];
-        gsap
-          .timeline()
-          .fromTo(
-            headSplits.current[0]?.words ?? [],
-            { yPercent: 114 },
-            { yPercent: 0, duration: 1.25, stagger: 0.08, ease: "swoop" },
-            0.15,
-          )
-          .fromTo(
-            bodySplits.current[0]?.lines ?? [],
-            { yPercent: 110 },
-            { yPercent: 0, duration: 0.7, stagger: 0.08, ease: "swoop" },
-            0.5,
-          )
-          .fromTo(
-            first?.querySelectorAll("[data-fade]") ?? [],
-            { y: 22, autoAlpha: 0 },
-            { y: 0, autoAlpha: 1, duration: 0.8, stagger: 0.09, ease: "swoop" },
-            0.4,
-          )
-          .fromTo(
-            first?.querySelectorAll("[data-underline]") ?? [],
-            { drawSVG: "0%" },
-            { drawSVG: "100%", duration: 0.8, ease: "power2.out" },
-            1.05,
-          )
+        const doodles = find("[data-doodle]");
+        /* A doodle with a stroke in it announces itself by drawing; the rest
+           have no stroke to draw, so they scale up into place instead. */
+        const sketched = doodles.filter((el) => el.querySelector("[data-draw]"));
+        const solid = doodles.filter((el) => !el.querySelector("[data-draw]"));
+
+        /* One timeline for the whole section, so this list IS the
+           choreography. The stage is empty when it starts: the photo opens
+           first, the copy rises into it, the graphic layer sketches itself on
+           around the copy, and the controls arrive last, once there is
+           something to control. Autoplay only starts when all of that has
+           landed — the ring used to be a second into its count before the
+           headline had finished arriving. */
+        const tl = gsap.timeline({ onComplete: startAutoplay });
+
+        tl
+          /* --------------------------------------------------- the photo -- */
           .fromTo(
             imageRefs.current[0],
             { clipPath: "inset(0% 0% 0% 100%)" },
@@ -318,17 +318,95 @@ export function HeroSlider() {
             { scale: 1.22 },
             { scale: 1, duration: 1.6, ease: "swoop" },
             0.1,
+          )
+          /* the two circles peeking out from behind the amoeba */
+          .fromTo(
+            find("[data-hero-orb]"),
+            { scale: 0.3, autoAlpha: 0 },
+            {
+              scale: 1,
+              autoAlpha: 1,
+              duration: 0.9,
+              stagger: 0.14,
+              ease: "back.out(1.7)",
+              transformOrigin: "50% 50%",
+            },
+            0.55,
+          )
+
+          /* ---------------------------------------------------- the copy -- */
+          .fromTo(
+            headSplits.current[0]?.words ?? [],
+            { yPercent: 114 },
+            { yPercent: 0, duration: 1.25, stagger: 0.08, ease: "swoop" },
+            0.15,
+          )
+          .fromTo(
+            first?.querySelectorAll("[data-fade]") ?? [],
+            { y: 22, autoAlpha: 0 },
+            { y: 0, autoAlpha: 1, duration: 0.8, stagger: 0.09, ease: "swoop" },
+            0.4,
+          )
+          .fromTo(
+            bodySplits.current[0]?.lines ?? [],
+            { yPercent: 110 },
+            { yPercent: 0, duration: 0.7, stagger: 0.08, ease: "swoop" },
+            0.5,
+          )
+          .fromTo(
+            first?.querySelectorAll("[data-underline]") ?? [],
+            { drawSVG: "0%" },
+            { drawSVG: "100%", duration: 0.8, ease: "power2.out" },
+            1.05,
+          )
+
+          /* ------------------------- the white accent curve on the photo -- */
+          .set(find("[data-hero-curve]"), { autoAlpha: 1 }, 1)
+          .fromTo(
+            "[data-draw-curve]",
+            { drawSVG: "0%" },
+            { drawSVG: "100%", duration: 1.1, ease: "power2.inOut" },
+            1,
+          )
+
+          /* ------------------------------------------------ the controls -- */
+          .fromTo(
+            find("[data-hero-controls]"),
+            { y: 20, autoAlpha: 0 },
+            { y: 0, autoAlpha: 1, duration: 0.8, ease: "swoop" },
+            1.4,
+          )
+
+          /* --------------- the doodles that have no stroke to draw with -- */
+          .fromTo(
+            solid,
+            { scale: 0.55, autoAlpha: 0 },
+            {
+              scale: 1,
+              autoAlpha: 1,
+              duration: 0.7,
+              stagger: 0.09,
+              ease: "back.out(1.6)",
+              transformOrigin: "50% 50%",
+            },
+            0.85,
           );
 
-        /* The white accent curve sketches itself on over the photo. */
-        gsap.fromTo(
-          "[data-draw-curve]",
-          { drawSVG: "0%" },
-          { drawSVG: "100%", duration: 1.1, delay: 0.9, ease: "power2.inOut" },
-        );
+        /* Each sketched doodle appears on the frame its own stroke starts, so
+           the drawing IS its entrance rather than something that happens to a
+           shape already sitting there. Done per element because a doodle can
+           hold more than one path, which would put a single shared stagger out
+           of step with the wrappers it is meant to match. */
+        sketched.forEach((el, i) => {
+          const at = 0.7 + i * 0.16;
+          tl.set(el, { autoAlpha: 1 }, at).fromTo(
+            el.querySelectorAll("[data-draw]"),
+            { drawSVG: "0%" },
+            { drawSVG: "100%", duration: 1.1, stagger: 0.1, ease: "power2.inOut" },
+            at,
+          );
+        });
       }, rootRef);
-
-      startAutoplay();
     };
 
     /* SplitText records where the lines break, so it has to measure against
@@ -356,6 +434,9 @@ export function HeroSlider() {
 
     return () => {
       cancelled = true;
+      /* Back behind the curtain, so a remount (StrictMode, HMR) replays the
+         entrance from the same blank stage the first paint started on. */
+      rootRef.current?.setAttribute("data-hero-stage", "pending");
       document.removeEventListener("visibilitychange", onVisibility);
       autoplayRef.current?.kill();
       headSplits.current.forEach((s) => s.revert());
@@ -374,6 +455,7 @@ export function HeroSlider() {
   return (
     <section
       ref={rootRef}
+      data-hero-stage="pending"
       className="relative isolate overflow-hidden bg-surface"
       aria-roledescription="carousel"
       aria-label="Welcome to Avi-Cenna"
@@ -417,10 +499,14 @@ export function HeroSlider() {
                 crescent shows. */}
             <span
               aria-hidden
+              data-hero-orb
+              data-enter
               className="absolute left-[48%] top-[-7%] h-[24%] w-[19%] rounded-full bg-gold-400"
             />
             <span
               aria-hidden
+              data-hero-orb
+              data-enter
               className="absolute bottom-[-6%] right-[1%] h-[32%] w-[25%] rounded-full bg-brand-400"
             />
 
@@ -454,6 +540,8 @@ export function HeroSlider() {
                 photo in the reference */}
             <svg
               aria-hidden
+              data-hero-curve
+              data-enter
               viewBox="0 0 200 120"
               preserveAspectRatio="none"
               className="absolute bottom-[6%] right-[4%] h-[34%] w-[42%] text-white"
@@ -463,9 +551,8 @@ export function HeroSlider() {
                 d="M4 8c26 30 24 62 54 78 30 16 76 6 138 2"
                 fill="none"
                 stroke="currentColor"
-                strokeWidth="3"
+                strokeWidth="2"
                 strokeLinecap="round"
-                vectorEffect="non-scaling-stroke"
               />
             </svg>
 
@@ -567,7 +654,7 @@ export function HeroSlider() {
           </div>
 
           {/* ------------------------------------------------- controls --- */}
-          <div className="mt-12 flex items-center gap-5">
+          <div data-hero-controls data-enter className="mt-12 flex items-center gap-5">
             <div className="hidden sm:flex items-center gap-2">
               <button
                 type="button"
