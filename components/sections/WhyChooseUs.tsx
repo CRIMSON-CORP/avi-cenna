@@ -23,7 +23,7 @@ export function WhyChooseUs() {
   return (
     <section
       id="why-choose-us"
-      className="scroll-mt-24 bg-surface-alt pb-(--spacing-section)"
+      className="scroll-mt-24 bg-surface-alt py-section"
       aria-labelledby="why-choose-us-heading"
     >
       <div className="shell">
