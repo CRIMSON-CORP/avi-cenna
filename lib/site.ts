@@ -58,6 +58,9 @@ export const navigation: NavSection[] = [
       { label: "Our Values", href: "/about#values" },
       { label: "History", href: "/about#history" },
       { label: "Leadership", href: "/about#leadership" },
+      /* A route of its own rather than an anchor: it carries an electoral
+         procedure and a committee, which is more than a section can hold. */
+      { label: "Parent-Teacher Association", href: "/about/pta" },
       /* Careers is a route of its own — it has a vacancy list and an
          application form, which is more than an anchor can carry. */
       { label: "Careers at Avi-Cenna", href: "/careers" },
