@@ -46,14 +46,17 @@ export const navigation: NavSection[] = [
     ],
   },
   {
+    /* Academics Overview and School Programs Overview are one page now, so
+       the programs half is an anchor. The three stages keep routes of their
+       own — each carries a full curriculum. */
     label: "Academics",
     href: "/academics",
     children: [
       { label: "Academics Overview", href: "/academics" },
-      { label: "School Programs Overview", href: "/academics/programs" },
-      { label: "EYFS", href: "/academics/eyfs" },
-      { label: "Primary", href: "/academics/primary" },
-      { label: "Secondary", href: "/academics/secondary" },
+      { label: "Our Approach", href: "/academics#approach" },
+      { label: "Early Years", href: "/academics/early-years" },
+      { label: "Primary School", href: "/academics/primary" },
+      { label: "Secondary School", href: "/academics/secondary" },
     ],
   },
   {
@@ -143,7 +146,7 @@ export const stages = [
   {
     label: "Early Years",
     age: "Age 2½ to 5",
-    href: "/academics/eyfs",
+    href: "/academics/early-years",
     blurb: "First steps, taken carefully.",
   },
   {
