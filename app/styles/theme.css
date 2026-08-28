@@ -33,6 +33,7 @@
 
   /* --------------------------------------------------------------- ACCENT */
   /* Warm coral, carried over from the current site's "Virtual Tour" button. */
+  --color-accent-50: #fff5f1; /* page-tint coral, for the Secondary stage */
   --color-accent-100: #ffe7e0;
   --color-accent-200: #ffc9b9;
   --color-accent-300: #ffab93;
@@ -42,6 +43,7 @@
   --color-accent-700: #b84930;
 
   /* ----------------------------------------------------------------- GOLD */
+  --color-gold-50: #fdf8ee; /* page-tint gold, for the Primary stage    */
   --color-gold-300: #f3d79a;
   --color-gold-400: #e8bd63;
   --color-gold-500: #e0a33c;
@@ -84,9 +86,9 @@
   --ease-out-back: cubic-bezier(0.34, 1.4, 0.64, 1);
   --ease-in-out-soft: cubic-bezier(0.65, 0, 0.35, 1);
 
-  --duration-fast: 180ms;
-  --duration-base: 320ms;
-  --duration-slow: 620ms;
+  --transition-duration-fast: 180ms;
+  --transition-duration-base: 320ms;
+  --transition-duration-slow: 620ms;
 
   /* ------------------------------------------------------------ TYPE SIZE */
   /* Fluid display sizes — no media queries needed at the call site.        */
