@@ -20,6 +20,26 @@ const sizes: Record<Size, string> = {
   md: "h-12 gap-2 px-6 text-[0.9rem]",
 };
 
+/**
+ * The class recipe on its own, for the handful of controls that wear a button
+ * but cannot BE one of these — the hero CTA that opens the tour dialog is a
+ * real <button>, not a link, so it takes the classes and skips the component.
+ */
+export function buttonClasses({
+  variant = "primary",
+  size = "md",
+  className,
+}: { variant?: Variant; size?: Size; className?: string } = {}) {
+  return cn(
+    "focus-ring group/btn inline-flex items-center justify-center rounded-pill font-semibold",
+    "transition-[background-color,border-color,box-shadow,transform] duration-base ease-out-expo",
+    "hover:-translate-y-0.5 active:translate-y-0",
+    variants[variant],
+    sizes[size],
+    className,
+  );
+}
+
 /** Renders an external URL as a plain anchor, everything else through Link. */
 function isExternal(href: string) {
   return /^(https?:)?\/\//.test(href) || href.startsWith("mailto:");
@@ -41,14 +61,7 @@ export function Button({
   arrow?: boolean;
   className?: string;
 } & Omit<React.ComponentProps<"a">, "href" | "children" | "className">) {
-  const classes = cn(
-    "focus-ring group/btn inline-flex items-center justify-center rounded-pill font-semibold",
-    "transition-[background-color,border-color,box-shadow,transform] duration-base ease-out-expo",
-    "hover:-translate-y-0.5 active:translate-y-0",
-    variants[variant],
-    sizes[size],
-    className,
-  );
+  const classes = buttonClasses({ variant, size, className });
 
   const inner = (
     <>

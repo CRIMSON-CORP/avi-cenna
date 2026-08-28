@@ -18,11 +18,30 @@ export const site = {
   bookVisit: "http://appointment.avi-cenna.com/",
 } as const;
 
+/* --------------------------------------------------------------- TOUR ---- */
+/* The old site gave the tour film a page of its own, which meant leaving
+   whatever you were reading to go and watch it. It plays in a dialog now — see
+   components/ui/VideoDialog.tsx — so the film lives here rather than behind a
+   route, and nothing loads until someone asks for it. */
+
+export const tour = {
+  src: "/videos/School-Tour-Video.mp4",
+  /** Frame six seconds in — the title card over the school entrance. */
+  poster: "/videos/School-Tour-Video-poster.jpg",
+  title: "A day at Avi-Cenna",
+  caption: "A walk through the school — classrooms, grounds, and an ordinary school day.",
+  /** Runtime, so nobody has to press play to find out what they are in for. */
+  duration: "7 min",
+} as const;
+
 /* ---------------------------------------------------------------- NAV ---- */
 /* Mirrors the current site's menu. Routes don't exist yet — pages are being
    built progressively, so these will 404 until each section lands. */
 
 export type NavLink = { label: string; href: string };
+
+/** A call to action either goes somewhere or opens something where it stands. */
+export type Cta = NavLink | { label: string; action: "tour" };
 export type NavSection = { label: string; href: string; children?: NavLink[] };
 
 export const navigation: NavSection[] = [
@@ -62,9 +81,13 @@ export const navigation: NavSection[] = [
   {
     label: "Admissions",
     href: "/admissions",
+    /* Overview and Procedure are one page now, so the procedure half is an
+       anchor. Uniform keeps a route of its own — it was a slider buried at
+       the bottom of the procedure page, where nobody would find it. */
     children: [
       { label: "Admission Overview", href: "/admissions" },
-      { label: "Admission Procedure", href: "/admissions/procedure" },
+      { label: "Admission Procedure", href: "/admissions#procedure" },
+      { label: "What to Bring", href: "/admissions#what-to-bring" },
       { label: "Uniform", href: "/admissions/uniform" },
     ],
   },
@@ -87,8 +110,8 @@ export type Slide = {
   /** Split across lines in the markup — each string is one display line. */
   headline: [string, string];
   body: string;
-  primary: NavLink;
-  secondary: NavLink;
+  primary: Cta;
+  secondary: Cta;
   /** `focal` is the object-position, so faces survive the blob's tight crop. */
   image: { src: string; alt: string; focal: string };
   /** Small proof line under the buttons. */
@@ -101,8 +124,8 @@ export const slides: Slide[] = [
     eyebrow: "Cambridge International",
     headline: ["Consistently top", "performers."],
     body: "Year after year, Cambridge recognises our students among the strongest IGCSE candidates in the region — taught by people who know each of them by name.",
-    primary: { label: "See our results", href: "/academics/secondary" },
-    secondary: { label: "Book a visit", href: site.bookVisit },
+    primary: { label: "Book a visit", href: site.bookVisit },
+    secondary: { label: "Take the tour", action: "tour" },
     image: {
       src: "/images/IMG_0435-2-scaled.jpg",
       alt: "Four Avi-Cenna secondary students working together around a laptop in the school grounds",
@@ -116,7 +139,7 @@ export const slides: Slide[] = [
     headline: ["A warm, friendly", "place to grow."],
     body: "An independent, secular school where creativity is valued, bullying has no room, and every child's progress is measured against their own ability — never against someone else's.",
     primary: { label: "Book a visit", href: site.bookVisit },
-    secondary: { label: "Why choose us", href: "#why-choose-us" },
+    secondary: { label: "Take the tour", action: "tour" },
     image: {
       src: "/images/Av-web-pic-411-1536x1020.jpg",
       alt: "Avi-Cenna students talking and laughing together outside on the school grounds",
@@ -129,8 +152,8 @@ export const slides: Slide[] = [
     eyebrow: "Student life & facilities",
     headline: ["Room to", "explore."],
     body: "A wide spectrum of co-curricular activities, from the International Award for Young People to sport, music and drama — because a school day should be bigger than a timetable.",
-    primary: { label: "Take the virtual tour", href: "/virtual-tour" },
-    secondary: { label: "Our facilities", href: "/facilities" },
+    primary: { label: "Take the tour", action: "tour" },
+    secondary: { label: "Book a visit", href: site.bookVisit },
     image: {
       src: "/images/IMG_1885-scaled.jpg",
       alt: "Avi-Cenna students together during a celebration in the school library",

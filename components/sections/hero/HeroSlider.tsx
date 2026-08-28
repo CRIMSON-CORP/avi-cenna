@@ -4,10 +4,11 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import { gsap, SplitText, useIsomorphicLayoutEffect } from "@/lib/gsap";
 import { BLOB_ASPECT, INITIAL_BLOB_PATH, pathFromCoords, shapeFor, SLIDE_SHAPES } from "@/lib/blob";
-import { slides } from "@/lib/site";
+import { type Cta, slides, tour } from "@/lib/site";
 import { cn } from "@/lib/utils";
-import { Button } from "@/components/ui/Button";
-import { ArrowIcon, StarIcon } from "@/components/ui/icons";
+import { Button, buttonClasses } from "@/components/ui/Button";
+import { VideoDialog } from "@/components/ui/VideoDialog";
+import { ArrowIcon, PlayIcon, StarIcon } from "@/components/ui/icons";
 import { Aurora } from "./Aurora";
 import { Doodles } from "./Doodles";
 
@@ -53,6 +54,37 @@ const NOSCRIPT_CSS = `<style>
 </style>`;
 
 /**
+ * One slide CTA. Most go somewhere; the tour opens the film in place, which
+ * needs a real <button> — so it borrows the Button classes rather than the
+ * component. `data-fade` sits on the wrapper either way, so the entrance and
+ * the slide change never have to care which of the two they are moving.
+ */
+function SlideCta({
+  cta,
+  variant,
+  onTour,
+}: {
+  cta: Cta;
+  variant: "primary" | "outline";
+  onTour: () => void;
+}) {
+  return (
+    <span data-fade className="inline-block">
+      {"action" in cta ? (
+        <button type="button" onClick={onTour} className={buttonClasses({ variant })}>
+          <PlayIcon className="h-3.5 w-3.5" />
+          {cta.label}
+        </button>
+      ) : (
+        <Button href={cta.href} variant={variant} arrow={variant === "primary"}>
+          {cta.label}
+        </Button>
+      )}
+    </span>
+  );
+}
+
+/**
  * The hero.
  *
  * Nothing travels sideways as a track — each slide swaps in place:
@@ -70,7 +102,10 @@ const NOSCRIPT_CSS = `<style>
  */
 export function HeroSlider() {
   const [index, setIndex] = useState(0);
+  const [tourOpen, setTourOpen] = useState(false);
   const indexRef = useRef(0);
+  /** Read from callbacks that must not restart the carousel behind the film. */
+  const tourOpenRef = useRef(false);
   const animating = useRef(false);
   const reduced = useRef(false);
 
@@ -95,7 +130,7 @@ export function HeroSlider() {
 
   const startAutoplay = useCallback(() => {
     autoplayRef.current?.kill();
-    if (reduced.current) return;
+    if (reduced.current || tourOpenRef.current) return;
 
     const proxy = { v: 0 };
     autoplayRef.current = gsap.to(proxy, {
@@ -428,7 +463,7 @@ export function HeroSlider() {
 
     const onVisibility = () => {
       if (document.hidden) autoplayRef.current?.pause();
-      else autoplayRef.current?.play();
+      else if (!tourOpenRef.current) autoplayRef.current?.play();
     };
     document.addEventListener("visibilitychange", onVisibility);
 
@@ -447,6 +482,22 @@ export function HeroSlider() {
     };
   }, [startAutoplay]);
 
+  /* The slides must not keep turning behind the film — and the pointer is off
+     the section while the dialog is up, so the hover pause cannot be relied on
+     to hold it. Killed rather than paused, so closing restarts a full count
+     instead of firing a slide change a moment later. */
+  const openTour = useCallback(() => {
+    tourOpenRef.current = true;
+    autoplayRef.current?.kill();
+    setTourOpen(true);
+  }, []);
+
+  const closeTour = useCallback(() => {
+    tourOpenRef.current = false;
+    setTourOpen(false);
+    startAutoplay();
+  }, [startAutoplay]);
+
   const handleNav = (fn: () => void) => {
     autoplayRef.current?.kill();
     fn();
@@ -460,9 +511,21 @@ export function HeroSlider() {
       aria-roledescription="carousel"
       aria-label="Welcome to Avi-Cenna"
       onMouseEnter={() => autoplayRef.current?.pause()}
-      onMouseLeave={() => autoplayRef.current?.play()}
+      onMouseLeave={() => {
+        if (!tourOpenRef.current) autoplayRef.current?.play();
+      }}
     >
       <noscript dangerouslySetInnerHTML={{ __html: NOSCRIPT_CSS }} />
+
+      <VideoDialog
+        open={tourOpen}
+        onClose={closeTour}
+        src={tour.src}
+        poster={tour.poster}
+        title={tour.title}
+        caption={tour.caption}
+        meta={tour.duration}
+      />
 
       <Aurora />
 
@@ -630,16 +693,8 @@ export function HeroSlider() {
                 </p>
 
                 <div className="mt-8 flex flex-wrap items-center gap-3">
-                  <span data-fade className="inline-block">
-                    <Button href={slide.primary.href} arrow>
-                      {slide.primary.label}
-                    </Button>
-                  </span>
-                  <span data-fade className="inline-block">
-                    <Button href={slide.secondary.href} variant="outline">
-                      {slide.secondary.label}
-                    </Button>
-                  </span>
+                  <SlideCta cta={slide.primary} variant="primary" onTour={openTour} />
+                  <SlideCta cta={slide.secondary} variant="outline" onTour={openTour} />
                 </div>
 
                 <p
