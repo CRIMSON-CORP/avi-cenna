@@ -3,6 +3,7 @@ import { earlyYears, stageThemes } from "@/lib/academics";
 import { StageHero } from "@/components/sections/academics/StageHero";
 import { ArrivalWalk } from "@/components/sections/academics/ArrivalWalk";
 import { EarlyYearsContent } from "@/components/sections/academics/EarlyYearsContent";
+import { SchoolDay } from "@/components/sections/academics/SchoolDay";
 import { VisitCta } from "@/components/sections/academics/VisitCta";
 
 export const metadata: Metadata = {
@@ -28,6 +29,7 @@ export default function EarlyYearsPage() {
       />
       <ArrivalWalk />
       <EarlyYearsContent />
+      <SchoolDay eyebrow={earlyYears.day.eyebrow} hours={earlyYears.day.hours} />
       <VisitCta />
     </main>
   );

@@ -36,6 +36,18 @@ export const stageThemes: Record<StageId, React.CSSProperties> = {
   } as React.CSSProperties,
 };
 
+/* ---------------------------------------------------------- THE DAY ----- */
+/* School hours, which the old site kept on the FAQ page as one run-on line
+   covering all three stages at once. A parent only ever wants their own
+   child's hours, so each stage carries its own — and Early Years carries two,
+   because Pre-School goes home at one o'clock and the rest do not. */
+
+export type DayHours = { label: string; time: string };
+
+/** True of every stage, so it is written once. */
+export const activitiesNote =
+  "Hours do not include co-curricular activities, which begin immediately after school and last an hour.";
+
 /* ------------------------------------------------------------- HERO ----- */
 
 export const academicsHero = {
@@ -165,6 +177,14 @@ export const earlyYears = {
   intro:
     "Our Early Years begins to impart in our children the confidence to seek out their own answers. Our young discoverers are taught using the EYFS curriculum, in a captivating little world tucked away in a safe and purpose-designed section of the school.",
 
+  day: {
+    eyebrow: "The school day",
+    hours: [
+      { label: "Pre-School", time: "7:55am – 1:00pm" },
+      { label: "Nursery and Reception", time: "7:55am – 2:15pm" },
+    ] satisfies DayHours[],
+  },
+
   /* THE ARRIVAL WALK. Four stops, in the order a child actually passes them,
      taken from the school's own sentence: "From the door, they make their way
      through a mini zoo and then take a walk down a high street, before
@@ -251,6 +271,11 @@ export const primary = {
   heading: { light: "Excellence as the goal,", bold: "in every measure." },
   intro:
     "Our school values everyone equally. We encourage all our pupils to do their best by celebrating their successes, helping them grow in confidence, build self-esteem, develop independence, and be responsible and respectful towards each other.",
+  day: {
+    eyebrow: "The school day",
+    hours: [{ label: "Years 1 to 6", time: "7:55am – 2:15pm" }] satisfies DayHours[],
+  },
+
   values: [
     "We aim to make excellence our goal in standards, achievement, behaviour and attendance.",
     "The curriculum we offer is broad, balanced, creative, interesting and varied, to suit all learners. It promotes the intellectual, moral, physical, spiritual and cultural development of everyone.",
@@ -293,6 +318,11 @@ export const secondary = {
   heading: { light: "We value all students for who they are,", bold: "and for what they can become." },
   intro:
     "We aim to provide a rigorous and effective education in an enabling environment — one which instils in students a desire to learn and to contribute, while feeling safe and confident.",
+
+  day: {
+    eyebrow: "The school day",
+    hours: [{ label: "Years 7 to 11", time: "7:55am – 3:15pm" }] satisfies DayHours[],
+  },
 
   keyStages: [
     {

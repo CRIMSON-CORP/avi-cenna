@@ -1,8 +1,9 @@
 "use client";
 
 import Image from "next/image";
-import { uniform } from "@/lib/admissions";
+import { uniform, uniformOutfitter } from "@/lib/admissions";
 import { Reveal } from "@/components/ui/Reveal";
+import { ArrowIcon } from "@/components/ui/icons";
 
 /**
  * The uniform page below the hero: the dress-code expectation, the uniform
@@ -124,6 +125,67 @@ export function UniformContent() {
               ))}
             </ul>
           </div>
+        </div>
+      </section>
+
+      {/* ----------------------------------------------------- where ----- */}
+      {/* The last practical question, and until now the one this page could
+          not answer: the outfitter was named on the old FAQ page and nowhere
+          else. The numbers are tel: links — this is the section most likely
+          to be opened on a phone. */}
+      <section
+        id="where-to-buy"
+        aria-labelledby="where-heading"
+        className="scroll-mt-24 bg-surface-alt py-section"
+      >
+        <div className="shell">
+          <Reveal>
+            <div className="grid gap-8 rounded-panel bg-surface p-8 sm:p-11 lg:grid-cols-[1fr_auto] lg:items-center lg:gap-16 lg:p-14">
+              <div className="max-w-xl">
+                <p className="text-[0.7rem] font-bold uppercase tracking-widest text-brand-500">
+                  {uniform.where.eyebrow}
+                </p>
+                <h2
+                  id="where-heading"
+                  className="mt-3 font-display text-[clamp(1.5rem,1.2rem+1.4vw,2.2rem)] font-extrabold leading-tight tracking-tight text-ink"
+                >
+                  {uniform.where.heading}
+                </h2>
+                <p className="mt-3 text-[0.97rem] leading-relaxed text-ink-body">
+                  {uniform.where.body}
+                </p>
+              </div>
+
+              <div className="lg:min-w-64">
+                <p className="font-display text-[1.3rem] font-extrabold tracking-tight text-ink">
+                  {uniformOutfitter.name}
+                </p>
+
+                <a
+                  href={uniformOutfitter.href}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="focus-ring group/link mt-2 inline-flex items-center gap-2 text-[0.9rem] font-bold text-brand-600 transition-colors duration-fast hover:text-brand-700"
+                >
+                  {uniformOutfitter.site}
+                  <ArrowIcon className="h-4 w-4 transition-transform duration-base ease-out-expo group-hover/link:translate-x-0.5" />
+                </a>
+
+                <ul className="mt-4 flex flex-wrap gap-x-5 gap-y-1">
+                  {uniformOutfitter.phones.map((phone) => (
+                    <li key={phone}>
+                      <a
+                        href={`tel:${phone.replace(/\s/g, "")}`}
+                        className="focus-ring text-[0.92rem] font-medium tabular-nums text-ink-body transition-colors duration-fast hover:text-brand-600"
+                      >
+                        {phone}
+                      </a>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </div>
+          </Reveal>
         </div>
       </section>
     </>

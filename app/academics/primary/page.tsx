@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { primary, stageThemes } from "@/lib/academics";
 import { StageHero } from "@/components/sections/academics/StageHero";
 import { PrimaryContent } from "@/components/sections/academics/PrimaryContent";
+import { SchoolDay } from "@/components/sections/academics/SchoolDay";
 import { VisitCta } from "@/components/sections/academics/VisitCta";
 
 export const metadata: Metadata = {
@@ -21,6 +22,7 @@ export default function PrimaryPage() {
         intro={primary.intro}
       />
       <PrimaryContent />
+      <SchoolDay eyebrow={primary.day.eyebrow} hours={primary.day.hours} />
       <VisitCta />
     </main>
   );

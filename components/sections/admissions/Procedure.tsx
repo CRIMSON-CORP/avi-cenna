@@ -77,16 +77,22 @@ export function Procedure() {
           </ol>
         </div>
 
-        <Reveal delay={0.1}>
-          <div className="mt-10 rounded-panel border border-brand-100 bg-surface-alt p-6 sm:p-8 lg:mt-14">
-            <h3 className="font-display text-[1.05rem] font-extrabold tracking-tight text-ink">
-              {admissionsProcedure.policy.title}
-            </h3>
-            <p className="mt-2 max-w-2xl text-[0.95rem] leading-relaxed text-ink-body">
-              {admissionsProcedure.policy.body}
-            </p>
-          </div>
-        </Reveal>
+        {/* The three standing rules the steps above do not carry: who may be
+            placed where, when you may start, and the one year group that is
+            closed. Beside the procedure rather than inside it — none of them
+            is a step anyone takes. */}
+        <ul className="mt-10 grid gap-4 lg:mt-14 lg:grid-cols-3">
+          {admissionsProcedure.policies.map((policy, i) => (
+            <Reveal as="li" key={policy.title} delay={0.1 + i * 0.07} className="h-full">
+              <div className="h-full rounded-panel border border-brand-100 bg-surface-alt p-6 sm:p-7">
+                <h3 className="font-display text-[1.05rem] font-extrabold tracking-tight text-ink">
+                  {policy.title}
+                </h3>
+                <p className="mt-2 text-[0.95rem] leading-relaxed text-ink-body">{policy.body}</p>
+              </div>
+            </Reveal>
+          ))}
+        </ul>
       </div>
     </section>
   );

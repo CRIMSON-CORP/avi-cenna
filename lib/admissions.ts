@@ -107,12 +107,24 @@ export const admissionsProcedure = {
     },
   ] satisfies Step[],
 
-  /* Set apart because it is a policy, not a step — and because it answers a
-     question many parents arrive with. */
-  policy: {
-    title: "On year groups",
-    body: "Based upon experience, Avi-Cenna considers it disadvantageous to a student to be placed in a year group above their age, and will not consider doing so.",
-  },
+  /* Set apart because these are policies, not steps — and because each one
+     answers a question parents arrive with. The last two came off the old
+     FAQ page, where the answer to "can we join in February" sat twelve
+     accordion rows away from the procedure it qualifies. */
+  policies: [
+    {
+      title: "On year groups",
+      body: "Based upon experience, Avi-Cenna considers it disadvantageous to a student to be placed in a year group above their age, and will not consider doing so.",
+    },
+    {
+      title: "On joining mid-year",
+      body: "Students may join us at any point during the school year. The procedure above is the same whenever you start it.",
+    },
+    {
+      title: "On Year 11",
+      body: "We do not admit students into Year 11. The IGCSE syllabus begins in Year 10 and ends in Year 11 with the examinations themselves, so there is no way to join partway through it.",
+    },
+  ],
 } as const;
 
 /* ----------------------------------------------------------- DOCUMENTS -- */
@@ -155,6 +167,16 @@ export type UniformSet = {
   image?: string;
 };
 
+/** The school's authorised outfitter. Named on the old FAQ page and nowhere
+    else — both the uniform page and the homepage FAQ read it from here, so a
+    changed number is changed in one place. */
+export const uniformOutfitter = {
+  name: "SchoolKits",
+  site: "schoolkits.ng",
+  href: "https://schoolkits.ng",
+  phones: ["0807 716 2412", "0908 712 8415"],
+} as const;
+
 export const uniform = {
   eyebrow: "Uniform",
   headline: { light: "Worn with", bold: "pride." },
@@ -196,6 +218,14 @@ export const uniform = {
         image: "/images/uniforms/uniform-3.jpg",
       },
     ] as UniformSet[],
+  },
+
+  /* A uniform page that shows the uniform but not where to buy it sends the
+     reader back to the search box. */
+  where: {
+    eyebrow: "Where to buy it",
+    heading: "One authorised outfitter.",
+    body: "The uniform is stocked by our authorised outfitter, who holds every item on this page. Order online, or call them directly.",
   },
 
   pe: {
