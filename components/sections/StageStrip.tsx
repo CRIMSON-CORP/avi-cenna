@@ -49,7 +49,7 @@ export function StageStrip() {
   return (
     <section
       aria-labelledby="stages-heading"
-      className="bg-surface pb-(--spacing-section) pt-(--spacing-section)"
+      className="bg-surface pb-section pt-section"
     >
       <div className="shell">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">

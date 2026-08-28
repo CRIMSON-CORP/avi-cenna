@@ -40,7 +40,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         <SmoothScroll />
         <a
           href="#main"
-          className="focus-ring sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-[60] focus:rounded-pill focus:bg-surface focus:px-5 focus:py-2.5 focus:text-sm focus:font-semibold focus:text-ink focus:shadow-card"
+          className="focus-ring sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-60 focus:rounded-pill focus:bg-surface focus:px-5 focus:py-2.5 focus:text-sm focus:font-semibold focus:text-ink focus:shadow-card"
         >
           Skip to content
         </a>

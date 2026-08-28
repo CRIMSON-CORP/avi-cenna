@@ -118,8 +118,8 @@ export function RolePicker({
               <li key={vacancy.id} className="relative snap-start">
                 <label
                   className={cn(
-                    "group flex h-full w-[17rem] cursor-pointer flex-col rounded-card border p-5 transition-all duration-500 ease-out-expo sm:w-[19rem]",
-                    "has-[:focus-visible]:outline has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-brand-500",
+                    "group flex h-full w-68 cursor-pointer flex-col rounded-card border p-5 transition-all duration-500 ease-out-expo sm:w-76",
+                    "has-focus-visible:outline has-focus-visible:outline-offset-2 has-focus-visible:outline-brand-500",
                     checked
                       ? "border-brand-500 bg-surface-deep shadow-lift"
                       : "border-brand-200 bg-surface hover:-translate-y-0.5 hover:border-brand-400 hover:shadow-card",
@@ -139,7 +139,7 @@ export function RolePicker({
                   <span className="flex flex-wrap items-center gap-2 pr-10">
                     <span
                       className={cn(
-                        "rounded-pill px-2.5 py-1 text-[0.66rem] font-bold uppercase tracking-[0.1em]",
+                        "rounded-pill px-2.5 py-1 text-[0.66rem] font-bold uppercase tracking-widest",
                         checked ? "bg-white/15 text-brand-200" : "bg-brand-50 text-brand-600",
                       )}
                     >
@@ -175,7 +175,7 @@ export function RolePicker({
 
                   <span
                     className={cn(
-                      "mt-4 flex items-center gap-2 text-[0.78rem] font-bold uppercase tracking-[0.1em]",
+                      "mt-4 flex items-center gap-2 text-[0.78rem] font-bold uppercase tracking-widest",
                       checked ? "text-gold-400" : "text-brand-500",
                     )}
                   >

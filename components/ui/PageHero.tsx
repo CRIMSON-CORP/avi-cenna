@@ -45,7 +45,7 @@ export function PageHero({
             {/* One soft brand glow, so the navy has depth without decoration. */}
             <div
               aria-hidden
-              className="pointer-events-none absolute -right-1/4 -top-1/3 h-[36rem] w-[36rem] rounded-full opacity-60 blur-3xl"
+              className="pointer-events-none absolute -right-1/4 -top-1/3 h-144 w-xl rounded-full opacity-60 blur-3xl"
               style={{
                 background:
                   "radial-gradient(circle, rgb(74 144 208 / 0.4) 0%, transparent 65%)",

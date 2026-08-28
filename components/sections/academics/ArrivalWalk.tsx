@@ -244,7 +244,7 @@ export function ArrivalWalk() {
                 <div className="max-w-xl">
                   <h3
                     data-stop-heading
-                    className="font-display text-[clamp(1.35rem,1.1rem+1.1vw,1.9rem)] font-extrabold leading-tight tracking-[-0.025em] text-ink"
+                    className="font-display text-[clamp(1.35rem,1.1rem+1.1vw,1.9rem)] font-extrabold leading-tight tracking-tight text-ink"
                   >
                     {stop.label}
                   </h3>

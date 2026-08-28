@@ -31,7 +31,7 @@ export function TheRole() {
               <p className="text-[0.7rem] font-bold uppercase tracking-[0.2em] text-brand-500">
                 {list.eyebrow}
               </p>
-              <h3 className="mt-3 max-w-sm font-display text-[clamp(1.35rem,1.1rem+1vw,1.85rem)] font-extrabold leading-tight tracking-[-0.025em] text-ink">
+              <h3 className="mt-3 max-w-sm font-display text-[clamp(1.35rem,1.1rem+1vw,1.85rem)] font-extrabold leading-tight tracking-tight text-ink">
                 {list.heading}
               </h3>
 

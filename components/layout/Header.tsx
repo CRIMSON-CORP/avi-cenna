@@ -32,7 +32,7 @@ export function Header() {
           scrolled ? "bg-surface/85 shadow-soft backdrop-blur-md" : "bg-transparent",
         )}
       >
-        <div className="shell flex h-[var(--header-h)] items-center justify-between gap-4">
+        <div className="shell flex h-(--header-h) items-center justify-between gap-4">
           <Logo />
 
           <div className="flex items-center gap-2 sm:gap-3">
@@ -56,9 +56,9 @@ export function Header() {
               )}
             >
               <span className="hidden text-[0.8rem] font-semibold text-ink sm:inline">Menu</span>
-              <span aria-hidden className="flex h-4 w-5 flex-col justify-center gap-[5px]">
-                <span className="h-[2px] w-full rounded-full bg-ink transition-transform duration-base ease-out-expo group-hover:-translate-y-[1px]" />
-                <span className="h-[2px] w-full rounded-full bg-ink transition-transform duration-base ease-out-expo group-hover:translate-y-[1px] group-hover:scale-x-75 group-hover:origin-left" />
+              <span aria-hidden className="flex h-4 w-5 flex-col justify-center gap-1.25">
+                <span className="h-0.5 w-full rounded-full bg-ink transition-transform duration-base ease-out-expo group-hover:-translate-y-px" />
+                <span className="h-0.5 w-full rounded-full bg-ink transition-transform duration-base ease-out-expo group-hover:translate-y-px group-hover:scale-x-75 group-hover:origin-left" />
               </span>
             </button>
           </div>

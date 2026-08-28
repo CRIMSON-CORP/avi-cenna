@@ -60,8 +60,8 @@ export function EarlyYearsContent() {
                       className="relative flex h-8 w-8 shrink-0 items-center justify-center rounded-full transition-colors duration-base"
                       style={{ backgroundColor: "var(--stage-tint)", color: "var(--stage-ink)" }}
                     >
-                      <span className="absolute h-[2px] w-3.5 rounded-full bg-current" />
-                      <span className="absolute h-[2px] w-3.5 rotate-90 rounded-full bg-current transition-transform duration-base ease-out-expo group-open:rotate-0" />
+                      <span className="absolute h-0.5 w-3.5 rounded-full bg-current" />
+                      <span className="absolute h-0.5 w-3.5 rotate-90 rounded-full bg-current transition-transform duration-base ease-out-expo group-open:rotate-0" />
                     </span>
                   </summary>
 

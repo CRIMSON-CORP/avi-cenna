@@ -43,7 +43,7 @@ export function Approach() {
             {academicsApproach.words.map((word) => (
               <li
                 key={word}
-                className="font-display text-[clamp(1.4rem,1.1rem+1.2vw,2rem)] font-extralight leading-tight tracking-[-0.025em] text-brand-600"
+                className="font-display text-[clamp(1.4rem,1.1rem+1.2vw,2rem)] font-extralight leading-tight tracking-tight text-brand-600"
               >
                 {word}
               </li>

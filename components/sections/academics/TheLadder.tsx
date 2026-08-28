@@ -107,12 +107,12 @@ export function TheLadder() {
               the column is 0.875rem wide, so the line is at half of that. */}
           <span
             aria-hidden
-            className="absolute bottom-2 left-[0.4375rem] top-2 w-px bg-brand-100"
+            className="absolute bottom-2 left-1.75 top-2 w-px bg-brand-100"
           />
           <span
             aria-hidden
             data-rail-fill
-            className="absolute bottom-2 left-[0.4375rem] top-2 w-px bg-linear-to-b from-brand-500 via-gold-500 to-accent-500"
+            className="absolute bottom-2 left-1.75 top-2 w-px bg-linear-to-b from-brand-500 via-gold-500 to-accent-500"
             style={{ clipPath: "inset(0% 0% 100% 0%)" }}
           />
 
@@ -138,14 +138,14 @@ function FloorRow({ floor }: { floor: Floor }) {
           thing on the page that changes as you scroll past. */}
       <span
         aria-hidden
-        className="mt-7 h-3.5 w-3.5 rounded-full border-2 bg-surface transition-colors duration-slow ease-out-expo group-data-[reached=true]/floor:bg-[var(--stage)]"
+        className="mt-7 h-3.5 w-3.5 rounded-full border-2 bg-surface transition-colors duration-slow ease-out-expo group-data-[reached=true]/floor:bg-(--stage)"
         style={{ borderColor: "var(--stage)" }}
       />
 
       <Link
         href={floor.href}
         scroll
-        className="focus-ring group/card rounded-panel border border-brand-100 p-6 transition-all duration-base ease-out-expo hover:-translate-y-1 hover:border-[var(--stage)] hover:shadow-card sm:p-8"
+        className="focus-ring group/card rounded-panel border border-brand-100 p-6 transition-all duration-base ease-out-expo hover:-translate-y-1 hover:border-(--stage) hover:shadow-card sm:p-8"
       >
         <p
           className="text-[0.7rem] font-bold uppercase tracking-[0.2em]"
