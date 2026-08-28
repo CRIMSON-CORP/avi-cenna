@@ -28,15 +28,21 @@ export type NavSection = { label: string; href: string; children?: NavLink[] };
 export const navigation: NavSection[] = [
   { label: "Home", href: "/" },
   {
+    /* The old site's six About pages are one route now, so these are anchors
+       rather than child routes. Old URLs redirect onto the same anchors —
+       see `redirects` in next.config.ts. */
     label: "About",
     href: "/about",
     children: [
-      { label: "Overview", href: "/about" },
-      { label: "Vision, Mission & Values", href: "/about/vision-mission-values" },
-      { label: "History", href: "/about/history" },
-      { label: "Leadership", href: "/about/leadership" },
-      { label: "Careers at Avi-Cenna", href: "/about/careers" },
-      { label: "School Anthem", href: "/about/school-anthem" },
+      { label: "Overview", href: "/about#overview" },
+      { label: "Vision & Mission", href: "/about#vision" },
+      { label: "Our Values", href: "/about#values" },
+      { label: "History", href: "/about#history" },
+      { label: "Leadership", href: "/about#leadership" },
+      /* Careers is a route of its own — it has a vacancy list and an
+         application form, which is more than an anchor can carry. */
+      { label: "Careers at Avi-Cenna", href: "/careers" },
+      { label: "School Anthem", href: "/about#anthem" },
     ],
   },
   {
