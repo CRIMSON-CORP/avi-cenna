@@ -227,10 +227,7 @@ function PersonCard({ person }: { person: Leader }) {
         setActive((a) => !a);
       }}
     >
-      <div
-        ref={rootRef}
-        className="relative aspect-4/5 overflow-hidden rounded-card bg-brand-100 shadow-soft transition-shadow duration-base ease-out-expo group-hover:shadow-card"
-      >
+      <div ref={rootRef} className="relative aspect-4/5 overflow-hidden rounded-card bg-brand-100">
         {person.photo ? (
           <Image src={person.photo} alt="" fill className="object-cover object-top" unoptimized />
         ) : (

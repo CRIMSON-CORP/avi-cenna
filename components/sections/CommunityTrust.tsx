@@ -53,22 +53,13 @@ export function CommunityTrust() {
         </motion.div>
       </div>
 
-      {/* Full-bleed lane so logos can drift in and out of the viewport edges. */}
+      {/* Full-bleed lane so logos can drift in and out of the viewport edges.
+          A mask gradient softly fades both ends so logos dissolve rather than
+          being sliced off by a hard edge. */}
       <div
-        className="marquee group relative mt-12 overflow-hidden lg:mt-16"
+        className="marquee group relative py-12 overflow-hidden mask-[linear-gradient(to_right,transparent,black_10%,black_90%,transparent)] lg:mt-16"
         style={{ "--marquee-duration": "38s" } as React.CSSProperties}
       >
-        {/* Soft fades at both ends, so logos dissolve rather than being sliced
-            off by a hard edge. */}
-        <div
-          aria-hidden
-          className="pointer-events-none absolute inset-y-0 left-0 z-10 w-16 bg-linear-to-r from-surface-alt to-transparent sm:w-32"
-        />
-        <div
-          aria-hidden
-          className="pointer-events-none absolute inset-y-0 right-0 z-10 w-16 bg-linear-to-l from-surface-alt to-transparent sm:w-32"
-        />
-
         <ul className="marquee-track flex w-max items-stretch">
           {lane.map(({ items, clone }) =>
             items.map((item) => (
@@ -77,7 +68,7 @@ export function CommunityTrust() {
                 aria-hidden={clone || undefined}
                 className="px-3 sm:px-4"
               >
-                <div className="flex h-24 w-56 items-center justify-center rounded-card border border-brand-100 bg-surface px-6 shadow-soft transition-all duration-base ease-out-expo hover:-translate-y-1 hover:border-brand-200 hover:shadow-card sm:h-28 sm:w-72">
+                <div className="flex h-24 w-56 items-center justify-center rounded-card border border-brand-100 bg-surface px-6 transition-all duration-base ease-out-expo hover:-translate-y-1 hover:border-brand-200 hover:shadow-card sm:h-28 sm:w-72">
                   <div className="relative h-full w-full">
                     <Image
                       src={item.src}

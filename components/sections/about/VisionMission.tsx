@@ -55,7 +55,7 @@ export function VisionMission() {
 
           {/* --------------------------------------------------- mission -- */}
           <Reveal delay={0.12}>
-            <div className="rounded-panel bg-surface p-7 shadow-card sm:p-9 lg:sticky lg:top-28">
+            <div className="rounded-panel bg-surface p-7 sm:p-9 lg:sticky lg:top-28">
               <p className="text-[0.7rem] font-bold uppercase tracking-[0.2em] text-accent-600">
                 {aboutVision.missionEyebrow}
               </p>
