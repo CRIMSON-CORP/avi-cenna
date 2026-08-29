@@ -96,6 +96,7 @@ export const navigation: NavSection[] = [
   },
   { label: "Student Life", href: "/student-life" },
   { label: "Facilities", href: "/facilities" },
+  { label: "Contact", href: "/contact" },
 ];
 
 /** The blue utility strip on the current site, folded into the menu overlay. */

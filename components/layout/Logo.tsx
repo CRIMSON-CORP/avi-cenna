@@ -13,7 +13,13 @@ import { cn } from "@/lib/utils";
  * multiplying by white leaves the backdrop untouched, so the white box vanishes
  * while the blue artwork stays. This works because every surface behind the
  * logo is white or near-white — on a dark background it would fail, and the
- * asset would need a real transparent PNG or SVG instead.
+ * asset would need a real transparent PNG or SVG instead — which is exactly
+ * the situation on a dark page. There, the REVERSE LOGO rule in theme.css
+ * reaches this element through `data-logo` and rebuilds the mark in white out
+ * of the same raster: invert turns the white ground black and the blue
+ * artwork orange, grayscale and brightness push that artwork to white, and
+ * `screen` drops the black ground out. No second asset, and the crest keeps
+ * its internal detail.
  */
 export function Logo({
   className,
@@ -30,6 +36,7 @@ export function Logo({
       className={cn("focus-ring group inline-flex items-center", className)}
     >
       <Image
+        data-logo
         src="/images/logo.png"
         alt={site.name}
         width={300}

@@ -252,3 +252,34 @@ html.lenis body {
     animation: none;
   }
 }
+
+/* ==========================================================================
+   REVERSE LOGO
+   --------------------------------------------------------------------------
+   The header is fixed and transparent until you scroll, and the logo is blue
+   artwork on a baked-in white background (see components/layout/Logo.tsx).
+   Over a page whose own background is dark it would show its white box, which
+   is why every other navy surface on this site is an inset panel.
+
+   /contact is not: it is navy edge to edge. It marks itself with
+   `data-page-theme="dark"`, and the rules below rebuild the mark in white out
+   of the same raster — invert takes the white ground to black and the blue
+   artwork to orange, grayscale and brightness push that artwork up to white,
+   and `screen` drops the black ground out against the navy.
+
+   The header keeps no background of its own on such a page. Its usual habit
+   of fading in a light bar once you scroll exists to keep dark artwork legible
+   over a light page; here the page is already dark and the mark is already
+   white, so the bar would only be something to look through.
+   ========================================================================== */
+
+body:has([data-page-theme="dark"]) header {
+  background-color: transparent;
+  box-shadow: none;
+  backdrop-filter: none;
+}
+
+body:has([data-page-theme="dark"]) header [data-logo] {
+  mix-blend-mode: screen;
+  filter: invert(1) grayscale(1) brightness(1.8);
+}
