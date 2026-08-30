@@ -102,6 +102,8 @@
   /* ------------------------------------------------------------- SPACING */
   --spacing-section: clamp(4rem, 2rem + 7vw, 8rem); /* vertical section rhythm */
   --spacing-gutter: clamp(1.25rem, 0.5rem + 3vw, 3.5rem);
+
+  --animate-wave: wave 30s linear infinite;
 }
 
 /* ==========================================================================
@@ -250,6 +252,15 @@ html.lenis body {
 @media (prefers-reduced-motion: reduce) {
   .marquee-track {
     animation: none;
+  }
+}
+
+@keyframes wave {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(3600deg);
   }
 }
 
