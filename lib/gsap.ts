@@ -9,7 +9,6 @@
  * plugins being registered a dozen times over.
  */
 
-import { useEffect, useLayoutEffect } from "react";
 import { gsap } from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { SplitText } from "gsap/SplitText";
@@ -28,16 +27,9 @@ if (typeof window !== "undefined") {
   CustomEase.create("sink", "M0,0 C0.55,0 0.78,0.28 1,1");
 }
 
-/**
- * `useLayoutEffect` that does not warn during server rendering.
- *
- * Anything that puts an element into its "before" state has to run here, not
- * in `useEffect`: layout effects are flushed before the browser paints the
- * commit, so the first frame the user sees is already the start of the
- * animation. A passive effect runs after that paint, which shows one frame of
- * the finished layout before GSAP pulls it apart.
- */
-export const useIsomorphicLayoutEffect =
-  typeof window === "undefined" ? useEffect : useLayoutEffect;
+/* Re-exported so every component that already imports it from here keeps
+   working; the definition moved to lib/isomorphic.ts so pages that want the
+   hook without the plugin suite can reach it without importing GSAP. */
+export { useIsomorphicLayoutEffect } from "./isomorphic";
 
 export { gsap, ScrollTrigger, SplitText, MorphSVGPlugin, DrawSVGPlugin, CustomEase };

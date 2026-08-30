@@ -1,28 +1,30 @@
 "use client";
 
 import { motion, useReducedMotion } from "motion/react";
-import { BLOB_ASPECT, pathFromCoords, SLIDE_SHAPES } from "@/lib/blob";
+import { BLOB_ASPECT, blobVariant, pathFromCoords } from "@/lib/blob";
+import { useClientSeed } from "@/lib/isomorphic";
 
 /**
- * The three amoebas in the corners of the page.
+ * The three amoebas in the corners of a dark page — /contact and the 404.
  *
- * They are the same traced outlines that mask the photograph in the homepage
- * hero — see lib/blob.ts — so the contact page is visibly the same family
- * rather than a page that went and found its own shapes.
+ * The outlines are deformed out of the same traced source that masks the
+ * photograph in the homepage hero — see `blobVariant` in lib/blob.ts — so they
+ * are family rather than shapes this page went and found somewhere else.
  *
- * Hard-edged and flat, in the Material 3 way: no blur, no gradient, no glow.
- * A blurred shape reads as lighting, and lighting sits behind a page; a solid
- * one reads as an object, and objects are what make a page feel built out of
- * something. The second, offset copy behind each is what gives that object
- * thickness without reaching for a 3D render.
+ * FRESH SHAPES PER VISIT, WITHOUT A HYDRATION MISMATCH. `useClientSeed`
+ * renders `seed` on the server and through the hydrating pass, so both sides
+ * of the wire agree exactly; once hydration is done it hands back a random
+ * number instead and the shapes are redrawn. See lib/isomorphic.ts.
  *
- * TWO ELEMENTS PER BLOB, and it matters: the outer one springs in on load,
- * the inner one turns forever. Both animate `transform`, so a single element
- * would have the entrance and the rotation overwriting each other — the
- * bounce would be swallowed the moment the loop took the property.
+ * The blobs arrive at `scale: 0`, so the seeded silhouettes are never visible
+ * on the way past — the swap lands while there is nothing on screen to swap.
+ *
+ * Someone with JavaScript off keeps the seeded shapes, which is why they are
+ * chosen values rather than an arbitrary pair.
  */
 
 type Corner = {
+  /** Offset from the page seed, so the three corners never coincide. */
   shape: number;
   /** Where it sits, and how big. Positions run well past the edge on purpose:
       a blob that fits entirely on screen reads as a sticker, one that runs
@@ -63,8 +65,11 @@ const CORNERS: Corner[] = [
   },
 ];
 
-export function Blobs() {
+export function Blobs({ seed = 0 }: { seed?: number }) {
   const reduceMotion = useReducedMotion();
+  /* One roll for the page, spread across the corners below, so the three are
+     always drawn from the same visit rather than three unrelated dice. */
+  const roll = useClientSeed(seed);
 
   return (
     <div aria-hidden className="pointer-events-none absolute inset-0 overflow-hidden">
@@ -98,7 +103,7 @@ export function Blobs() {
                 : { duration: corner.spin, ease: "linear", repeat: Infinity }
             }
           >
-            <Blob shape={corner.shape} colour={corner.colour} />
+            <Blob seed={roll + corner.shape * 17} colour={corner.colour} />
           </motion.div>
         </motion.div>
       ))}
@@ -106,13 +111,13 @@ export function Blobs() {
   );
 }
 
-function Blob({ shape, colour }: { shape: number; colour: string }) {
+function Blob({ seed, colour }: { seed: number; colour: string }) {
   return (
     <svg viewBox="0 0 1 1" preserveAspectRatio="none" className={`h-full w-full ${colour}`}>
       {/* One shape, one flat fill. No blur, no gradient, no second copy behind
           it — the silhouette is the whole idea, and anything layered under it
           reads as a smudge rather than as depth. */}
-      <path d={pathFromCoords(SLIDE_SHAPES[shape])} fill="currentColor" opacity={0.9} />
+      <path d={pathFromCoords(blobVariant(seed))} fill="currentColor" opacity={0.9} />
     </svg>
   );
 }

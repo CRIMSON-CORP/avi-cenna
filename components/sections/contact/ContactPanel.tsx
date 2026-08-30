@@ -4,7 +4,7 @@ import { motion, useReducedMotion } from "motion/react";
 import { site } from "@/lib/site";
 import { contactDetails, contactHero, type Detail } from "@/lib/contact";
 import { ArrowIcon, FacebookIcon, InstagramIcon } from "@/components/ui/icons";
-import { Blobs } from "./Blobs";
+import { Blobs } from "@/components/ui/Blobs";
 import { EnquiryForm } from "./EnquiryForm";
 
 /**
@@ -40,7 +40,7 @@ export function ContactPanel() {
          whether the viewport is a laptop or a tall desktop monitor. */
       className="relative isolate flex min-h-svh items-center overflow-hidden bg-surface-deep pb-section pt-[calc(var(--header-h)+2rem)]"
     >
-      <Blobs />
+      <Blobs seed={7} />
 
       <div className="shell relative z-10 w-full">
         <motion.div
