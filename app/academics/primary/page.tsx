@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import { primary, stageThemes } from "@/lib/academics";
 import { StageHero } from "@/components/sections/academics/StageHero";
+import { StageGallery } from "@/components/sections/academics/StageGallery";
+import { galleries } from "@/lib/galleries";
 import { PrimaryContent } from "@/components/sections/academics/PrimaryContent";
 import { SchoolDay } from "@/components/sections/academics/SchoolDay";
 import { VisitCta } from "@/components/sections/academics/VisitCta";
@@ -21,6 +23,7 @@ export default function PrimaryPage() {
         heading={primary.heading}
         intro={primary.intro}
       />
+      <StageGallery gallery={galleries.primary} />
       <PrimaryContent />
       <SchoolDay eyebrow={primary.day.eyebrow} hours={primary.day.hours} />
       <VisitCta />

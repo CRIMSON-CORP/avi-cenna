@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import { earlyYears, stageThemes } from "@/lib/academics";
 import { StageHero } from "@/components/sections/academics/StageHero";
+import { StageGallery } from "@/components/sections/academics/StageGallery";
+import { galleries } from "@/lib/galleries";
 import { ArrivalWalk } from "@/components/sections/academics/ArrivalWalk";
 import { EarlyYearsContent } from "@/components/sections/academics/EarlyYearsContent";
 import { SchoolDay } from "@/components/sections/academics/SchoolDay";
@@ -27,6 +29,7 @@ export default function EarlyYearsPage() {
         heading={earlyYears.heading}
         intro={earlyYears.intro}
       />
+      <StageGallery gallery={galleries.early} />
       <ArrivalWalk />
       <EarlyYearsContent />
       <SchoolDay eyebrow={earlyYears.day.eyebrow} hours={earlyYears.day.hours} />
