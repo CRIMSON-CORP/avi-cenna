@@ -1,5 +1,8 @@
 import { NextResponse } from "next/server";
 import { careersApply, getVacancyBySlug } from "@/lib/careers";
+import { clientIp, rateLimit } from "@/lib/rate-limit";
+import { recipientFor } from "@/lib/email/recipients";
+import { applicationReceipt } from "@/lib/email/receipts";
 import { applicationEmail } from "@/lib/email/application";
 import { sendMail } from "@/lib/email/send";
 
@@ -33,6 +36,10 @@ const ACCEPTED_CV_TYPES = [
   "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
 ];
 
+/** 429 copy. Says what to do instead rather than only saying no. */
+const TOO_MANY =
+  "That is a lot of submissions from one connection in a short time. Wait a few minutes and try again, or call the school if it is urgent.";
+
 type Errors = Record<string, string>;
 
 function text(form: FormData, key: string) {
@@ -41,6 +48,20 @@ function text(form: FormData, key: string) {
 }
 
 export async function POST(request: Request) {
+  /* Before reading the body: a rejected request should not have cost us a
+     5MB upload. Unproxied there is no address to key on, and blocking every
+     submission is worse than allowing them. */
+  const ip = clientIp(request);
+  if (ip) {
+    const limit = rateLimit(`applications:${ip}`);
+    if (!limit.ok) {
+      return NextResponse.json(
+        { ok: false, errors: { form: TOO_MANY } },
+        { status: 429, headers: { "Retry-After": String(limit.retryAfter) } },
+      );
+    }
+  }
+
   let form: FormData;
   try {
     form = await request.formData();
@@ -89,7 +110,7 @@ export async function POST(request: Request) {
   const file = cv as File;
   const position = vacancy!;
 
-  const mail = applicationEmail({
+  const receiptInput = {
     vacancy: position,
     name,
     email,
@@ -97,13 +118,15 @@ export async function POST(request: Request) {
     message: message || null,
     cv: { name: file.name, size: file.size, type: file.type },
     receivedAt: new Date().toISOString(),
-  });
+  };
+  const mail = applicationEmail(receiptInput);
 
   try {
     await sendMail({
-      /* The advertised address is the default, so this works before anyone
-         sets the variable — and can be redirected without a deploy. */
-      to: process.env.MAIL_TO_APPLICATIONS || careersApply.email,
+      /* Signs in as the careers mailbox, so this leaves as career@ rather
+         than as some other department. */
+      mailbox: "careers",
+      to: recipientFor("applications"),
       fromName: mail.fromName,
       subject: mail.subject,
       html: mail.html,
@@ -130,6 +153,22 @@ export async function POST(request: Request) {
     return NextResponse.json(
       { ok: false, errors: { form: careersApply.failure } },
       { status: 502 },
+    );
+  }
+
+  /* After the staff copy, never alongside it — confirming receipt while that
+     send is failing would be a lie. A failed receipt is logged, not returned:
+     the application did arrive. */
+  try {
+    await sendMail({
+      mailbox: "careers",
+      to: email,
+      ...applicationReceipt(receiptInput),
+    });
+  } catch (cause) {
+    console.error(
+      `[applications] receipt to ${email} failed; the application itself arrived:`,
+      cause instanceof Error ? cause.message : cause,
     );
   }
 

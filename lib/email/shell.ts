@@ -1,20 +1,13 @@
 /**
- * The chrome every Avi-Cenna email shares, plus the handful of helpers that
- * make writing one bearable.
+ * Letterhead and building blocks shared by every email.
  *
- * EMAIL HTML IS NOT WEB HTML. Everything here is deliberately twenty years
- * out of date — tables for layout, a style attribute on every element, no
- * stylesheet, no webfont, no flexbox and no grid — because Outlook lays out
- * through Word's rendering engine and Gmail discards most of a <style> block.
- * Anything that matters has to survive on inline attributes alone. The one
- * <style> block below carries mobile refinements only: the email must read
- * correctly with it thrown away, because for a good share of readers it will
- * be.
+ * Tables, inline styles, no stylesheet, no webfont — Outlook lays out through
+ * Word and Gmail discards most of a <style> block. The one <style> here is
+ * mobile-only and the email must read correctly without it.
  *
- * The palette is a hand copy of the tokens in app/styles/theme.css. Custom
- * properties cannot be read from TypeScript, and would not survive a mail
- * client if they could, so this is the one place outside that file where
- * brand colours are written out. Change one there, change it here.
+ * The palette is a hand copy of app/styles/theme.css; custom properties can
+ * neither be read from TypeScript nor survive a mail client. Change one
+ * there, change it here.
  */
 
 import { site } from "@/lib/site";
@@ -34,13 +27,11 @@ export const palette = {
   onNavySoft: "#b9d3ea", // ink-invert-soft
 } as const;
 
-/** No webfont survives the trip, so this is the stack clients actually have.
-    Plus Jakarta Sans is the site's face; in an inbox it is Segoe or SF. */
+/** No webfont survives the trip. */
 export const FONT =
   "'Segoe UI', -apple-system, BlinkMacSystemFont, Roboto, Helvetica, Arial, sans-serif";
 
-/** Absolute, because a mail client has no origin to resolve a path against.
-    Set NEXT_PUBLIC_SITE_URL on the VPS; the fallback is the live domain. */
+/** Absolute — a mail client has no origin to resolve a path against. */
 export const SITE_URL = (process.env.NEXT_PUBLIC_SITE_URL ?? "https://avi-cenna.com").replace(
   /\/$/,
   "",
@@ -56,15 +47,8 @@ const ESCAPES: Record<string, string> = {
   "'": "&#39;",
 };
 
-/**
- * Everything a stranger typed goes through this before it reaches the markup.
- *
- * The application form is an unauthenticated text box pointed at the HR
- * inbox. A name of `<img src=x onerror=...>` has to arrive in that inbox as
- * characters on the page, not as markup — mail clients are far more hostile
- * to script than a browser is, but the same input also lands in webmail, in
- * previews, and eventually in whatever admin screen reads these back.
- */
+/** Every value off a public form goes through this before it reaches the
+    markup. */
 export function esc(value: string) {
   return value.replace(/[&<>"']/g, (c) => ESCAPES[c]);
 }
@@ -76,22 +60,15 @@ export function escLines(value: string) {
 
 /* ------------------------------------------------------------ formatting -- */
 
-/** Human file size. Deliberately coarse: nobody reading an application needs
-    the byte count, they need to know whether it is a document or a scan. */
+/** Coarse on purpose — document or scan, not a byte count. */
 export function bytes(n: number) {
   if (n < 1024) return `${n} bytes`;
   if (n < 1024 * 1024) return `${Math.round(n / 1024)} KB`;
   return `${(n / (1024 * 1024)).toFixed(1)} MB`;
 }
 
-/**
- * Lagos time, always, and labelled as such.
- *
- * The server's own clock is UTC and the people reading these are in Lagos, so
- * an unlabelled timestamp would quietly report a 9am application as 8am. West
- * Africa Time has no daylight saving, but the timezone is named rather than
- * assumed so this keeps working if the VPS is ever moved.
- */
+/** Lagos time, labelled. The server runs UTC; an unlabelled stamp would
+    report a 9am application as 8am. */
 export function lagos(iso: string) {
   const stamp = new Intl.DateTimeFormat("en-GB", {
     timeZone: "Africa/Lagos",
@@ -104,6 +81,104 @@ export function lagos(iso: string) {
     hour12: false,
   }).format(new Date(iso));
   return `${stamp} WAT`;
+}
+
+/* ----------------------------------------------------------- components -- */
+
+/** "there" when empty — "Hello ," is worse than impersonal. */
+export function firstName(name: string) {
+  return name.trim().split(/\s+/)[0] || "there";
+}
+
+/** A small-caps section label. */
+export function heading(text: string) {
+  return `              <p style="margin:28px 0 14px; font-family:${FONT}; font-size:10px; font-weight:700; letter-spacing:0.16em; text-transform:uppercase; color:${palette.muted};">${esc(text)}</p>
+`;
+}
+
+/** The one fact the email is about: the position, the date, the subject. */
+export function panel({
+  label,
+  title,
+  href,
+  chips = [],
+}: {
+  label: string;
+  title: string;
+  href?: string;
+  chips?: string[];
+}) {
+  const pills = chips
+    .map(
+      (chip) =>
+        `<span style="display:inline-block; padding:5px 11px; margin:0 6px 6px 0; background-color:${palette.card}; border:1px solid ${palette.blueSoft}; border-radius:999px; font-family:${FONT}; font-size:11px; font-weight:700; letter-spacing:0.04em; color:${palette.navy};">${esc(chip)}</span>`,
+    )
+    .join("");
+
+  const titleHtml = href
+    ? `<a href="${esc(href)}" style="color:${palette.navy}; text-decoration:none;">${esc(title)}</a>`
+    : esc(title);
+
+  return `              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color:${palette.blueFaint}; border:1px solid ${palette.blueSoft}; border-radius:14px;">
+                <tr>
+                  <td style="padding:20px 22px;">
+                    <p style="margin:0 0 6px; font-family:${FONT}; font-size:10px; font-weight:700; letter-spacing:0.16em; text-transform:uppercase; color:${palette.muted};">${esc(label)}</p>
+                    <p style="margin:0${pills ? " 0 12px" : ""}; font-family:${FONT}; font-size:19px; line-height:1.3; font-weight:800; letter-spacing:-0.01em; color:${palette.navy};">${titleHtml}</p>
+                    ${pills}
+                  </td>
+                </tr>
+              </table>
+`;
+}
+
+/** Label/value pairs; the media query stacks them on a phone. Values are
+    raw HTML — escape before passing. */
+export function rows(pairs: [string, string][]) {
+  const cells = pairs
+    .map(
+      ([label, value]) => `                <tr>
+                  <td class="sm-stack" width="120" style="width:120px; padding:0 0 14px; vertical-align:top; font-family:${FONT}; font-size:11px; font-weight:700; letter-spacing:0.06em; text-transform:uppercase; color:${palette.muted};">${esc(label)}</td>
+                  <td class="sm-stack-v" style="padding:0 0 14px; vertical-align:top; font-family:${FONT}; font-size:15px; line-height:1.5; color:${palette.body};">${value}</td>
+                </tr>`,
+    )
+    .join("\n");
+
+  return `              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+${cells}
+              </table>
+`;
+}
+
+/** <button> does nothing in mail. Padding on the anchor so the whole pill
+    is the tap target where display:inline-block is ignored. */
+export function button(href: string, label: string) {
+  return `              <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin:4px 0 0;">
+                <tr>
+                  <td style="background-color:${palette.coral}; border-radius:999px;">
+                    <a href="${esc(href)}" style="display:inline-block; padding:13px 26px; font-family:${FONT}; font-size:14px; font-weight:700; color:#ffffff; text-decoration:none;">${esc(label)}</a>
+                  </td>
+                </tr>
+              </table>
+`;
+}
+
+/** Someone else's words, escaped, line breaks kept. */
+export function quote(text: string) {
+  return `              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+                <tr>
+                  <td style="padding:2px 0 2px 18px; border-left:3px solid ${palette.blueSoft}; font-family:${FONT}; font-size:15px; line-height:1.7; color:${palette.body};">${escLines(text)}</td>
+                </tr>
+              </table>
+`;
+}
+
+
+export function mailtoLink(address: string) {
+  return `<a href="${esc(`mailto:${address}`)}" style="color:${palette.blue}; font-weight:600; text-decoration:underline;">${esc(address)}</a>`;
+}
+
+export function telLink(phone: string) {
+  return `<a href="${esc(`tel:${phone.replace(/[^\d+]/g, "")}`)}" style="color:${palette.blue}; font-weight:600; text-decoration:underline;">${esc(phone)}</a>`;
 }
 
 /* ---------------------------------------------------------------- shell -- */
@@ -122,13 +197,8 @@ export type ShellParts = {
   footnote: string;
 };
 
-/**
- * Wraps a body in the school's letterhead.
- *
- * 600px is the width every mail client has agreed on for twenty years; the
- * `width` attribute rather than a CSS width because Outlook honours the
- * attribute and ignores a good deal of the CSS.
- */
+/** 600px via the width attribute, which Outlook honours where it ignores
+    the CSS. */
 export function shell({ preheader, eyebrow, title, body, footnote }: ShellParts) {
   return `<!doctype html>
 <html lang="en" xmlns:o="urn:schemas-microsoft-com:office:office">
@@ -143,7 +213,7 @@ export function shell({ preheader, eyebrow, title, body, footnote }: ShellParts)
 <noscript><xml><o:OfficeDocumentSettings><o:PixelsPerInch>96</o:PixelsPerInch></o:OfficeDocumentSettings></xml></noscript>
 <![endif]-->
 <style>
-  /* Mobile refinements only. Everything above reads correctly without this. */
+  /* Mobile only. */
   @media only screen and (max-width: 620px) {
     .sm-full { width: 100% !important; }
     .sm-pad { padding-left: 22px !important; padding-right: 22px !important; }
@@ -155,8 +225,7 @@ export function shell({ preheader, eyebrow, title, body, footnote }: ShellParts)
 </head>
 <body style="margin:0; padding:0; width:100%; background-color:${palette.page};">
 
-  <!-- The inbox preview line, and enough invisible padding after it that the
-       client cannot drag the first words of the body up to fill the space. -->
+  <!-- Preview line, then padding so the client cannot pull body text up. -->
   <div style="display:none; max-height:0; max-width:0; overflow:hidden; opacity:0; font-size:1px; line-height:1px; color:${palette.page}; mso-hide:all;">${esc(preheader)}</div>
   <div style="display:none; max-height:0; max-width:0; overflow:hidden; opacity:0; font-size:1px; line-height:1px; mso-hide:all;">&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;</div>
 

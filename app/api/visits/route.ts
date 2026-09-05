@@ -1,38 +1,34 @@
 import { NextResponse } from "next/server";
-import { enquiryEmail } from "@/lib/email/enquiry";
-import { clientIp, rateLimit } from "@/lib/rate-limit";
 import { recipientFor } from "@/lib/email/recipients";
-import { enquiryReceipt } from "@/lib/email/receipts";
+import { clientIp, rateLimit } from "@/lib/rate-limit";
 import { sendMail } from "@/lib/email/send";
-import { enquiryForm } from "@/lib/contact";
+import { visitReceipt } from "@/lib/email/receipts";
+import { visitEmail } from "@/lib/email/visit";
+import { isVisitSlot, validateVisitDate, visitForm } from "@/lib/visits";
 
 /**
- * POST /api/enquiries — receives a message from the contact form and emails
- * it to the school office.
+ * POST /api/visits — receives a request to visit the school and emails the
+ * office.
  *
- * ⚠️ DELIVERED, BUT NOT STORED. The office mailbox is the record — the same
- * trade as /api/applications and /api/visits, and the same caveat: a message
- * deleted from that inbox is gone, and nothing here can answer "what did we
- * promise this person in March".
+ * A REQUEST, NOT A BOOKING. Nothing here can see the school's calendar, so
+ * this cannot and does not reserve a slot. Both the form and the email say so.
+ * The day this route starts writing to a real calendar is the day that wording
+ * has to change with it.
  *
- * A FAILED SEND IS REPORTED AS A FAILURE, because the page tells the sender
- * their message arrived and someone will reply within a working day. Saying
- * that over a message that never left is the one outcome worth avoiding.
+ * The date rules live in lib/visits.ts and are enforced there, not here, so
+ * the form and this route cannot disagree about what counts as a valid day.
+ * Client-side validation is a courtesy; this is the copy that decides.
  *
- * A sibling of /api/applications rather than an extension of it: that route
- * resolves every submission to a vacancy id, which an enquiry does not have,
- * and the two want to be read by different people once they are stored.
+ * ⚠️ DELIVERED, BUT NOT STORED — the same trade as /api/applications. The
+ * office mailbox is the record.
  */
 
-/* Deliberately permissive, and the same expression the applications route
-   uses. Strict email regexes reject addresses that are perfectly valid, and
-   the only real test is whether a reply arrives. */
+/* Deliberately permissive, and the same expression the other two routes use.
+   Strict email regexes reject addresses that are perfectly valid, and the
+   only real test is whether a reply arrives. */
 const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-/** Long enough to be a message, short enough not to be an essay or an
-    attempt to fill the log with someone else's novel. */
-const MESSAGE_MAX = 4000;
-const SUBJECT_MAX = 200;
+const MESSAGE_MAX = 2000;
 
 /** 429 copy. Says what to do instead rather than only saying no. */
 const TOO_MANY =
@@ -51,7 +47,7 @@ export async function POST(request: Request) {
      submission is worse than allowing them. */
   const ip = clientIp(request);
   if (ip) {
-    const limit = rateLimit(`enquiries:${ip}`);
+    const limit = rateLimit(`visits:${ip}`);
     if (!limit.ok) {
       return NextResponse.json(
         { ok: false, errors: { form: TOO_MANY } },
@@ -73,7 +69,8 @@ export async function POST(request: Request) {
   const name = text(form, "name");
   const email = text(form, "email");
   const phone = text(form, "phone");
-  const subject = text(form, "subject");
+  const date = text(form, "date");
+  const slot = text(form, "slot");
   const message = text(form, "message");
 
   const errors: Errors = {};
@@ -83,11 +80,13 @@ export async function POST(request: Request) {
   else if (!EMAIL.test(email)) errors.email = "That does not look like an email address.";
   if (!phone) errors.phone = "Add a phone number.";
 
-  if (!subject) errors.subject = "Add a subject.";
-  else if (subject.length > SUBJECT_MAX) errors.subject = "That subject line is too long.";
+  const dateError = validateVisitDate(date);
+  if (dateError) errors.date = dateError;
 
-  if (!message) errors.message = "Write your message.";
-  else if (message.length > MESSAGE_MAX) errors.message = "That message is too long.";
+  if (!slot) errors.slot = "Choose a morning or an afternoon.";
+  else if (!isVisitSlot(slot)) errors.slot = "Choose a morning or an afternoon.";
+
+  if (message.length > MESSAGE_MAX) errors.message = "That message is too long.";
 
   if (Object.keys(errors).length > 0) {
     return NextResponse.json({ ok: false, errors }, { status: 400 });
@@ -97,55 +96,56 @@ export async function POST(request: Request) {
     name,
     email,
     phone,
-    subject,
-    message,
+    date,
+    slot,
+    message: message || null,
     receivedAt: new Date().toISOString(),
   };
-  const mail = enquiryEmail(receiptInput);
+  const mail = visitEmail(receiptInput);
 
   try {
     await sendMail({
-      /* Signs in as the general office mailbox, so this leaves as that address
+      /* Signs in as the admissions mailbox, so this leaves as that address
          rather than as some other department. */
-      mailbox: "enquiries",
-      to: recipientFor("enquiries"),
+      mailbox: "visits",
+      to: recipientFor("visits"),
       fromName: mail.fromName,
       subject: mail.subject,
       html: mail.html,
       text: mail.text,
-      /* So the office can reply straight from the inbox to the sender. */
+      /* So the office can reply straight from the inbox to the family. */
       replyTo: email,
     });
   } catch (cause) {
     /* Logged with the address on purpose: nothing is stored, so this line is
-       the only trace that somebody wrote in and nobody heard. */
+       the only trace that a family asked to visit and nobody heard. */
     console.error(
-      `[enquiries] DELIVERY FAILED from ${email}:`,
+      `[visits] DELIVERY FAILED for ${date} from ${email}:`,
       cause instanceof Error ? cause.message : cause,
     );
     return NextResponse.json(
-      { ok: false, errors: { form: enquiryForm.failed } },
+      { ok: false, errors: { form: visitForm.failure } },
       { status: 502 },
     );
   }
 
   /* After the staff copy, never alongside it — confirming receipt while that
      send is failing would be a lie. A failed receipt is logged, not returned:
-     the message did arrive. */
+     the request did arrive. */
   try {
     await sendMail({
-      mailbox: "enquiries",
+      mailbox: "visits",
       to: email,
-      ...enquiryReceipt(receiptInput),
+      ...visitReceipt(receiptInput),
     });
   } catch (cause) {
     console.error(
-      `[enquiries] receipt to ${email} failed; the message itself arrived:`,
+      `[visits] receipt to ${email} failed; the request itself arrived:`,
       cause instanceof Error ? cause.message : cause,
     );
   }
 
-  console.info(`[enquiries] delivered from ${email}`);
+  console.info(`[visits] delivered ${date} ${slot} from ${email}`);
 
   return NextResponse.json({ ok: true });
 }

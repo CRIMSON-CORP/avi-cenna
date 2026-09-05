@@ -1,31 +1,27 @@
 /**
- * The one place in the codebase that talks to a mail server.
+ * SMTP client, one authenticated connection per mailbox.
  *
- * WE ARE A CLIENT, NOT A MAIL SERVER. Nodemailer signs in to a mailbox that
- * already exists on the school's mail host and asks it to send — it does not
- * deliver anything itself. That distinction is the whole deliverability
- * story: the domain's SPF record names the mail host as an allowed sender and
- * says to distrust everything else, so mail leaving through that host is
- * vouched for and mail leaving straight from this server would not be. Point
- * SMTP_HOST at the school's mail host, never at localhost.
+ * A host only lets an account send as itself, so From follows the login — it
+ * is not a field callers may set. Each form owns a mailbox so confirmations
+ * to the public come from the right address. Pools are built on first use, so
+ * a mailbox with no password yet breaks only the form that needs it.
  *
- * WHY `from` IS NOT A SETTING. A mail host will only let an account send as
- * itself, so the From address is derived from SMTP_USER rather than being its
- * own variable that could drift out of step with it. Making the applicant the
- * sender — the obvious instinct, so replies reach them — would be rejected by
- * the host and would fail SPF at the far end. `replyTo` is the supported way
- * to get the same result, and every template that needs it sets it.
+ * SMTP_HOST must be the school's mail host, never localhost: the domain's SPF
+ * record vouches for that host and distrusts everything else.
  */
 
 import nodemailer, { type Transporter } from "nodemailer";
 import { site } from "@/lib/site";
 
+/** The school mailboxes the site can send as. One per form. */
+export type Mailbox = "careers" | "visits" | "enquiries";
+
 export type Mail = {
+  /** Which account signs in, and therefore the From address. No default:
+      the wrong one is invisible until a stranger gets it. */
+  mailbox: Mailbox;
   to: string;
-  /** The person this message is on behalf of, shown in the inbox as
-      "Their Name (via <MAIL_FROM_NAME>)". The address underneath stays ours —
-      see the note above on why it has to. Omit for mail that is genuinely
-      from the school rather than relayed for someone. */
+  /** Relays as "Their Name (via <mailbox>)". Staff-facing mail only. */
   fromName?: string;
   subject: string;
   html: string;
@@ -37,25 +33,33 @@ export type Mail = {
 
 /* --------------------------------------------------------------- config -- */
 
+/** Same host for all three, so only credentials differ. */
+const MAILBOXES: Record<Mailbox, { prefix: string; name: string }> = {
+  careers: { prefix: "MAILBOX_CAREERS", name: "Avi-Cenna Careers" },
+  visits: { prefix: "MAILBOX_VISITS", name: "Avi-Cenna Admissions" },
+  enquiries: { prefix: "MAILBOX_ENQUIRIES", name: site.name },
+};
+
 type Config = {
   host: string;
   port: number;
   user: string;
   pass: string;
-  fromName: string;
+  name: string;
 };
 
-function readConfig(): Config {
-  const missing = (["SMTP_HOST", "SMTP_PORT", "SMTP_USER", "SMTP_PASS"] as const).filter(
-    (key) => !process.env[key],
-  );
+function readConfig(mailbox: Mailbox): Config {
+  const { prefix, name } = MAILBOXES[mailbox];
+  const keys = ["SMTP_HOST", "SMTP_PORT", `${prefix}_USER`, `${prefix}_PASS`];
 
-  /* All of them at once. Finding out about a missing variable one deploy at a
-     time is a miserable way to configure a server. */
+  /* All of them at once, and named. Finding out about a missing variable one
+     deploy at a time is a miserable way to configure a server, and with three
+     mailboxes there are three times as many chances to miss one. */
+  const missing = keys.filter((key) => !process.env[key]);
   if (missing.length > 0) {
     throw new Error(
-      `Mail is not configured — set ${missing.join(", ")} in the environment. ` +
-        `See .env.example for what each one is.`,
+      `The ${mailbox} mailbox is not configured — set ${missing.join(", ")} ` +
+        `in the environment. See .env.example for what each one is.`,
     );
   }
 
@@ -67,60 +71,53 @@ function readConfig(): Config {
   return {
     host: process.env.SMTP_HOST!,
     port,
-    user: process.env.SMTP_USER!,
-    pass: process.env.SMTP_PASS!,
-    fromName: process.env.MAIL_FROM_NAME || site.name,
+    user: process.env[`${prefix}_USER`]!,
+    pass: process.env[`${prefix}_PASS`]!,
+    name: process.env[`${prefix}_NAME`] || name,
   };
 }
 
 /* ------------------------------------------------------------ transport -- */
 
-let cached: Transporter | null = null;
+/** Pooled per mailbox: a TLS handshake per submission is slow and trips
+    connection-rate limits on shared hosts. Two each — three pools already
+    means six sockets against one server. */
+const pools = new Map<Mailbox, Transporter>();
 
-/**
- * Built once and kept.
- *
- * A route handler runs per request, and building a transport per request
- * means a fresh TCP connection and TLS handshake for every application — on a
- * shared host that is both slow and a good way to trip a connection-rate
- * limit. `pool` keeps a couple of connections open and reuses them.
- */
-function transport(config: Config) {
-  if (cached) return cached;
+function transport(mailbox: Mailbox, config: Config) {
+  const existing = pools.get(mailbox);
+  if (existing) return existing;
 
-  cached = nodemailer.createTransport({
+  const created = nodemailer.createTransport({
     host: config.host,
     port: config.port,
-    /* 465 is TLS from the first byte; 587 and 25 start in the clear and
-       upgrade with STARTTLS. Deriving this from the port removes a variable
-       that is only ever set wrong. */
+    /* 465 is TLS from the first byte; everything else upgrades via
+       STARTTLS. Derived, because a separate flag only ever gets set wrong. */
     secure: config.port === 465,
     auth: { user: config.user, pass: config.pass },
     pool: true,
     maxConnections: 2,
-    /* Shared mail hosts do go away mid-handshake. Without these the request
-       hangs until something upstream gives up, and the applicant watches a
-       spinner instead of being told to try again. */
+    /* Shared hosts go away mid-handshake; without these the request hangs
+       and the visitor watches a spinner. */
     connectionTimeout: 10_000,
     greetingTimeout: 10_000,
     socketTimeout: 20_000,
   });
 
-  return cached;
+  pools.set(mailbox, created);
+  return created;
 }
 
 /* --------------------------------------------------------------- sending -- */
 
-/** Strip anything that could break out of a header or a filename. Nodemailer
-    encodes these correctly on its own; this is the second lock on the door,
-    because every value here came off a public form. */
+/** Header injection guard. Nodemailer encodes correctly on its own; this
+    is the second lock, because every value here came off a public form. */
 function oneLine(value: string) {
   return value.replace(/[\r\n]+/g, " ").trim();
 }
 
-/** A display name from a public form, made safe to sit in a header: one
-    line, and short enough that a pasted essay cannot push the real address
-    out of view in a narrow inbox column. */
+/** Capped so a pasted essay cannot push the address out of the inbox
+    column. */
 function safeName(name: string) {
   return oneLine(name).slice(0, 60).trim();
 }
@@ -129,22 +126,17 @@ function safeFilename(name: string) {
   return oneLine(name).replace(/[\\/]/g, "-").slice(0, 200) || "attachment";
 }
 
-/**
- * Sends, or throws. There is no third outcome and no swallowed error: the
- * caller decides what to tell the person waiting on the other end, and it
- * cannot decide that if a failure looks like a success from here.
- */
+/** Sends or throws — never swallows. The caller decides what to tell the
+    person waiting, and cannot if a failure looks like success here. */
 export async function sendMail(mail: Mail) {
-  const config = readConfig();
+  const config = readConfig(mail.mailbox);
 
-  /* "Adaeze Okonkwo (via Avi-Cenna Careers)" — the convention GitHub and
-     Substack use. HR scans the sender column and sees who applied, while the
-     address stays the mailbox that really sent it, so nothing about SPF or
-     deliverability changes. */
+  /* "Adaeze Okonkwo (via Avi-Cenna Careers)": staff see who wrote in, the
+     address stays ours. Omitted on public mail. */
   const person = mail.fromName ? safeName(mail.fromName) : "";
-  const fromName = person ? `${person} (via ${config.fromName})` : config.fromName;
+  const fromName = person ? `${person} (via ${config.name})` : config.name;
 
-  await transport(config).sendMail({
+  await transport(mail.mailbox, config).sendMail({
     from: { name: fromName, address: config.user },
     to: mail.to,
     replyTo: mail.replyTo ? oneLine(mail.replyTo) : undefined,

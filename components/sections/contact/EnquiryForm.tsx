@@ -20,7 +20,8 @@ import { ArrowIcon, CheckIcon } from "@/components/ui/icons";
  * while they are still typing the first letter of it, which is both true and
  * useless.
  *
- * ⚠️ Submissions are validated but NOT DELIVERED. See the route.
+ * Submissions are emailed to the school office and not stored anywhere
+ * else — see the note on app/api/enquiries/route.ts for what that costs.
  */
 
 const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -52,6 +53,7 @@ export function EnquiryForm() {
   const [values, setValues] = useState<Values>(EMPTY);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [status, setStatus] = useState<"idle" | "sending" | "sent" | "failed">("idle");
+  const [failure, setFailure] = useState<string | null>(null);
   const formRef = useRef<HTMLFormElement>(null);
   const reduceMotion = useReducedMotion();
 
@@ -84,6 +86,7 @@ export function EnquiryForm() {
 
     setStatus("sending");
     setErrors({});
+    setFailure(null);
 
     try {
       const body = new FormData();
@@ -93,6 +96,12 @@ export function EnquiryForm() {
       const result = await response.json();
 
       if (!response.ok) {
+        /* Mail host down, or rate limited. Not fixable by editing a field. */
+        if (response.status >= 500 || response.status === 429) {
+          setFailure(result?.errors?.form ?? null);
+          setStatus("failed");
+          return;
+        }
         setErrors(result.errors ?? {});
         focusFirst(result.errors ?? {});
         setStatus("idle");
@@ -220,7 +229,7 @@ export function EnquiryForm() {
 
             {status === "failed" && (
               <p role="alert" className="mt-5 text-[0.88rem] font-medium text-accent-200">
-                {enquiryForm.failed}
+                {failure ?? enquiryForm.failed}
               </p>
             )}
 

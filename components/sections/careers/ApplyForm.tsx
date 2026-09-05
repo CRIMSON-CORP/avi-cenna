@@ -39,12 +39,16 @@ export function ApplyForm({ vacancies }: { vacancies: Vacancy[] }) {
 
   const [status, setStatus] = useState<"idle" | "sending" | "sent" | "error">("idle");
   const [errors, setErrors] = useState<Record<string, string>>({});
+  /** Server-supplied failure text, when it says something the static copy
+      cannot — a rate limit names a wait. */
+  const [failure, setFailure] = useState<string | null>(null);
 
   async function onSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const form = event.currentTarget;
     setStatus("sending");
     setErrors({});
+    setFailure(null);
 
     try {
       const response = await fetch("/api/applications", {
@@ -54,11 +58,11 @@ export function ApplyForm({ vacancies }: { vacancies: Vacancy[] }) {
       const result = await response.json();
 
       if (!response.ok) {
-        /* A 5xx means the application never reached anyone — the mail host is
-           down or misconfigured. Nothing the applicant can fix by editing a
-           field, so it gets the failure banner and the form keeps everything
-           they typed, rather than field errors nobody would find. */
-        if (response.status >= 500) {
+        /* Nothing the applicant can fix by editing a field: the mail host is
+           down, or they have hit the rate limit. Banner, and keep what they
+           typed. */
+        if (response.status >= 500 || response.status === 429) {
+          setFailure(result?.errors?.form ?? null);
           setStatus("error");
           return;
         }
@@ -280,7 +284,7 @@ export function ApplyForm({ vacancies }: { vacancies: Vacancy[] }) {
 
           {status === "error" && (
             <p role="alert" className="mt-5 text-[0.9rem] font-medium text-accent-700">
-              {careersApply.failure}
+              {failure ?? careersApply.failure}
             </p>
           )}
         </form>
