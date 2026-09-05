@@ -32,6 +32,9 @@ yarn-error.log*
 
 # env files (can opt-in for committing if needed)
 .env*
+# ...but the template of what to set is committed, so a new machine knows
+# which variables exist without anyone having to remember them.
+!.env.example
 
 # vercel
 .vercel

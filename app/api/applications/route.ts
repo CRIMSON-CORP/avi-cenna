@@ -1,21 +1,26 @@
 import { NextResponse } from "next/server";
 import { careersApply, getVacancyBySlug } from "@/lib/careers";
+import { applicationEmail } from "@/lib/email/application";
+import { sendMail } from "@/lib/email/send";
 
 /**
- * POST /api/applications — receives a job application.
+ * POST /api/applications — receives a job application and emails it to HR.
  *
- * ⚠️ THIS DOES NOT STORE ANYTHING YET.
+ * ⚠️ DELIVERED, BUT NOT STORED. The email is the record. There is no database
+ * behind this, so an application that is deleted from the HR mailbox is gone,
+ * and there is no admin screen to answer "who applied for vac_02". That is a
+ * deliberate first step rather than an oversight — but the day a vacancy
+ * draws fifty applicants, a mailbox stops being a good enough filing system.
  *
- * Validation is real and the response is real, but the application itself is
- * only written to the server log. An applicant who submits this form is told
- * it was sent, and it was not. Before /careers is publicly reachable, either
- * replace the marked block below with a database insert and file upload, or
- * take the form down.
+ * The pieces a database would need are already here: the role is resolved to
+ * a real vacancy id rather than trusted as free text, and the CV is checked
+ * for type and size before it goes anywhere. Adding storage means inserting a
+ * row and uploading the bytes next to the send below; nothing else moves.
  *
- * Everything around that block is written to survive the swap: the role is
- * resolved to a real vacancy id, so applications are already keyed the way an
- * admin screen needs them ("show me everyone who applied for vac_02"), and
- * the CV is validated for type and size before it would ever be stored.
+ * A FAILED SEND IS REPORTED AS A FAILURE. If the mail host is unreachable the
+ * applicant is told so and asked to try again, because the alternative — a
+ * green tick over a lost application — is the exact thing this route used to
+ * do wrong.
  */
 
 /* Deliberately permissive. Strict email regexes reject addresses that are
@@ -79,27 +84,56 @@ export async function POST(request: Request) {
     return NextResponse.json({ ok: false, errors }, { status: 400 });
   }
 
-  const application = {
-    vacancyId: vacancy!.id,
-    vacancySlug: vacancy!.slug,
-    vacancyTitle: vacancy!.title,
+  /* Validation above guarantees both of these; the assertions are for the
+     type checker, which cannot see that far back. */
+  const file = cv as File;
+  const position = vacancy!;
+
+  const mail = applicationEmail({
+    vacancy: position,
     name,
     email,
     phone,
     message: message || null,
-    cv: cv instanceof File ? { name: cv.name, size: cv.size, type: cv.type } : null,
+    cv: { name: file.name, size: file.size, type: file.type },
     receivedAt: new Date().toISOString(),
-  };
+  });
 
-  /* ---------------------------------------------------------------------
-     REPLACE THIS BLOCK. Persist `application` and upload the CV bytes, then
-     delete the console.warn. Nothing above or below needs to change.
-     --------------------------------------------------------------------- */
-  console.warn(
-    "[applications] NOT PERSISTED — no database wired up yet:",
-    JSON.stringify(application),
-  );
-  /* ------------------------------------------------------------------- */
+  try {
+    await sendMail({
+      /* The advertised address is the default, so this works before anyone
+         sets the variable — and can be redirected without a deploy. */
+      to: process.env.MAIL_TO_APPLICATIONS || careersApply.email,
+      fromName: mail.fromName,
+      subject: mail.subject,
+      html: mail.html,
+      text: mail.text,
+      /* So that hitting reply in the HR mailbox reaches the applicant. The
+         From address cannot be theirs — see the note in lib/email/send.ts. */
+      replyTo: email,
+      attachments: [
+        {
+          filename: file.name,
+          content: Buffer.from(await file.arrayBuffer()),
+          contentType: file.type,
+        },
+      ],
+    });
+  } catch (cause) {
+    /* The applicant's address is logged on purpose. Nothing is stored, so
+       this line is the only trace that someone tried to apply and the school
+       never heard about it — enough to go back to them by hand. */
+    console.error(
+      `[applications] DELIVERY FAILED for ${position.id} from ${email}:`,
+      cause instanceof Error ? cause.message : cause,
+    );
+    return NextResponse.json(
+      { ok: false, errors: { form: careersApply.failure } },
+      { status: 502 },
+    );
+  }
+
+  console.info(`[applications] delivered ${position.id} from ${email}`);
 
   return NextResponse.json({ ok: true });
 }

@@ -206,7 +206,10 @@ export const careersApply = {
   },
   failure:
     "Something went wrong sending your application. Please try again, or email it to us directly.",
-  email: "hr_admin@avi-cenna.com",
+  /* The mailbox the school actually watches, and the one applications are
+     delivered to. It is printed on the page as the address to use for a
+     posted or hand-filled form, so it must be an inbox somebody opens. */
+  email: "career@avi-cenna.com",
   /* Still served by the current site. Move the PDF into /public and change
      this to a local path when the new site takes over the domain. */
   form: {

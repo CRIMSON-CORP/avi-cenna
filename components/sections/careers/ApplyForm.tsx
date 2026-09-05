@@ -20,7 +20,8 @@ import { cn } from "@/lib/utils";
  * left alone — see the note on it below, and RolePicker for why selecting and
  * sharing are deliberately separate acts.
  *
- * ⚠️ Submissions are validated but NOT STORED. See app/api/applications/route.ts.
+ * Submissions are emailed to HR and not stored anywhere else — see the note
+ * on app/api/applications/route.ts for what that costs.
  */
 export function ApplyForm({ vacancies }: { vacancies: Vacancy[] }) {
   const params = useSearchParams();
@@ -53,6 +54,14 @@ export function ApplyForm({ vacancies }: { vacancies: Vacancy[] }) {
       const result = await response.json();
 
       if (!response.ok) {
+        /* A 5xx means the application never reached anyone — the mail host is
+           down or misconfigured. Nothing the applicant can fix by editing a
+           field, so it gets the failure banner and the form keeps everything
+           they typed, rather than field errors nobody would find. */
+        if (response.status >= 500) {
+          setStatus("error");
+          return;
+        }
         setErrors(result.errors ?? {});
         setStatus("idle");
         /* Send focus to the first thing that needs fixing, rather than
