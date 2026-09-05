@@ -15,7 +15,11 @@ export const site = {
     facebook: "https://www.facebook.com/AviCennaInternationalSchool/",
     instagram: "https://www.instagram.com/avicennaschool/",
   },
-  bookVisit: "http://appointment.avi-cenna.com/",
+  /* Was an external appointment system on its own subdomain. It is a page
+     on this site now, so a visitor never leaves and the request lands in the
+     school's own inbox rather than a third party's dashboard. Every "Book a
+     visit" button on the site reads this one value. */
+  bookVisit: "/book-visit",
 } as const;
 
 /* --------------------------------------------------------------- TOUR ---- */
