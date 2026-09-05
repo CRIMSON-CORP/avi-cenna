@@ -50,6 +50,7 @@ export function SchoolFilm() {
                   src={`https://i.ytimg.com/vi/${aboutFilm.videoId}/hqdefault.jpg`}
                   alt=""
                   fill
+                  loading="eager"
                   sizes="(min-width: 1280px) 1200px, 100vw"
                   className="object-cover transition-transform duration-1000 ease-out-expo group-hover:scale-[1.02]"
                 />

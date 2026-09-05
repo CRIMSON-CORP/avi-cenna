@@ -36,12 +36,12 @@ export function WhyChooseUs() {
         >
           <div className="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between relative after:absolute after:right-0 after:top-1/2 after:translate-y-1/2 after:w-px after:h-10 after:bg-linear-to-b from-transparent via-surface-alt to-transparent">
             <div className="max-w-xl">
-              <p className="text-2xl font-semibold text-brand-200">Why choose us</p>
+              <p className="text-2xl font-semibold text-brand-200">Why join us</p>
               <p
                 id="why-choose-us-heading"
                 className="mt-2 max-w-sm text-[0.95rem] leading-relaxed text-ink-invert-soft"
               >
-                Six reasons parents choose Avi-Cenna.
+                Six reasons parents join Avi-Cenna.
               </p>
             </div>
           </div>

@@ -49,40 +49,6 @@ import { Reveal } from "@/components/ui/Reveal";
  * difference between this feeling fluid and feeling mechanical.
  */
 
-/* One period is 50 units, so two full waves cross the 100-wide viewBox — a
-   single wavelength stretched over the whole card reads as a tilted straight
-   edge, not water. The path carries four periods (0–200) so drifting it left
-   by exactly one period lands the next crest where the last one was: the
-   travel is seamless and can loop forever.
-
-   A cubic reaches only 29% of its control points — not the three quarters an
-   earlier note here claimed — so ±12 buys a surface deviating ±3.5 units,
-   about 12px on a card this size. The path runs far past the bottom of the
-   box, so there is always fill beneath the crest at any level. */
-const PERIOD = 50;
-
-const WAVE =
-  "M0,0 C12.5,-12 37.5,12 50,0 C62.5,-12 87.5,12 100,0 C112.5,-12 137.5,12 150,0 C162.5,-12 187.5,12 200,0 L200,240 L0,240 Z";
-
-/* The two resting levels, in viewBox units down from the top of the card.
-
-   FULL sits inside the card on purpose — see the note on the component. The
-   surface wanders ±3.5 from the wave, ±2.2 from the tilt out at the card's
-   edges and ±2 from the bob, so at 10 it swings between roughly 2 and 18 and
-   never leaves the card in either direction.
-
-   EMPTY has to clear that same swing below the bottom edge, or a crest shows
-   as a navy sliver along the bottom of every card at rest. */
-const EMPTY = 112;
-const FULL = 10;
-
-/** Degrees either side of level. Small: at ±2.5° the card's edges rise and
-    fall about 2.2 units, which is a rock rather than a listing ship. */
-const TILT = 2.5;
-
-/** Units the whole surface lifts and drops, bodily, on top of everything. */
-const BOB = 2;
-
 export function Leadership() {
   return (
     <section
@@ -162,82 +128,15 @@ function PersonCard({ person }: { person: Leader }) {
   useIsomorphicLayoutEffect(() => {
     if (!links.length || !rootRef.current) return;
     const root = rootRef.current;
-    const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
     const ctx = gsap.context(() => {
-      const level = root.querySelector("[data-level]");
-      const surface = root.querySelector("[data-surface]");
-      const travel = root.querySelector("[data-travel]");
       const icons = gsap.utils.toArray<HTMLElement>("[data-social]", root);
 
-      gsap.set(level, { y: EMPTY });
-      /* The pivot is the middle of the waterline in the surface group's own
-         coordinates, so the water see-saws about its centre rather than
-         swinging from a corner off the side of the card. Both surface loops
-         start at one end of their travel, which is where the paused surface
-         sits while nobody is hovering. */
-      gsap.set(surface, { svgOrigin: "50 0", rotation: -TILT, y: -BOB });
       gsap.set(icons, { opacity: 0, scale: 0.5, y: 16 });
 
       const tl = gsap.timeline({ paused: true });
 
-      if (reduced) {
-        /* No rise, no drift — the reveal still has to happen, it just happens
-           as a cross-fade. */
-        tl.to(level, { y: FULL, duration: 0.001 }).to(icons, {
-          opacity: 1,
-          scale: 1,
-          y: 0,
-          duration: 0.2,
-        });
-        timeline.current = tl;
-        return;
-      }
-
-      /* The water's own motion, independent of how full the card is, so all
-         of it carries on once the level has settled.
-
-         The three periods are 2.4s, 9s and 5.6s — a yoyo takes twice its
-         duration to come back — and share no useful common multiple, so the
-         combination does not visibly repeat while anyone is looking at it.
-         Equal or harmonic periods would fall into step within a few seconds
-         and the surface would start reading as one rigid object again.
-
-         Only ticking while a card is actually hovered: a dozen of these
-         compositing behind untouched cards is a cost with nothing on screen
-         to show for it. */
-      loops.current = [
-        gsap.to(travel, {
-          x: -PERIOD,
-          duration: 2.4,
-          ease: "none",
-          repeat: -1,
-          paused: true,
-        }),
-        gsap.to(surface, {
-          rotation: TILT,
-          duration: 4.5,
-          ease: "sine.inOut",
-          repeat: -1,
-          yoyo: true,
-          paused: true,
-        }),
-        gsap.to(surface, {
-          y: BOB,
-          duration: 2.8,
-          ease: "sine.inOut",
-          repeat: -1,
-          yoyo: true,
-          paused: true,
-        }),
-      ];
-
       tl
-        /* back.out rather than an in-out: the level runs about six units past
-           FULL and comes back, so the water arrives with weight behind it.
-           The old ease decelerated into a dead stop, which is a good part of
-           why the whole thing felt mechanical. */
-        .to(level, { y: FULL, duration: 1.15, ease: "back.out(1.1)" }, 0)
         /* Icons break the surface before the fill has finished rising. */
         .to(
           icons,
