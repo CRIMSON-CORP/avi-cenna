@@ -5,7 +5,7 @@
  */
 
 import { site } from "@/lib/site";
-import { formatVisitDate, slotLabel } from "@/lib/visits";
+import { formatVisitDate, reasonLabel, slotLabel } from "@/lib/visits";
 import {
   FONT,
   SITE_URL,
@@ -30,6 +30,8 @@ export type VisitEmailInput = {
   date: string;
   /** "morning" | "afternoon" — validated by the route. */
   slot: string;
+  /** A VISIT_REASONS slug — validated by the route. */
+  reason: string;
   message: string | null;
   /** ISO 8601, as written by the route. */
   receivedAt: string;
@@ -38,26 +40,28 @@ export type VisitEmailInput = {
 export function visitEmail(v: VisitEmailInput) {
   const when = formatVisitDate(v.date);
   const slot = slotLabel(v.slot);
+  const why = reasonLabel(v.reason);
 
   const replyHref = `mailto:${v.email}?subject=${encodeURIComponent(
     `Your visit to ${site.name}`,
   )}`;
 
   const subject = `Visit request — ${when} — ${v.name}`;
-  const preheader = `${slot}. ${v.name} · ${v.phone} — not yet confirmed.`;
+  const preheader = `${why} · ${slot}. ${v.name} · ${v.phone} — not yet confirmed.`;
 
   const body = `
               <p style="margin:0 0 24px; font-family:${FONT}; font-size:15px; line-height:1.65; color:${palette.body};">
                 <strong style="color:${palette.navy};">${esc(v.name)}</strong> would like to visit the school. Confirm the time with them — nothing is booked until you do.
               </p>
 
-${panel({ label: "Requested for", title: when, chips: [slot] })}
+${panel({ label: "Requested for", title: when, chips: [slot, why] })}
 
 ${heading("How to reach them")}
 ${rows([
   ["Name", `<strong style="color:${palette.navy};">${esc(v.name)}</strong>`],
   ["Email", mailtoLink(v.email)],
   ["Phone", telLink(v.phone)],
+  ["About", esc(why)],
 ])}
 
 ${button(replyHref, `Reply to ${v.name.split(/\s+/)[0]}`)}
@@ -84,7 +88,7 @@ ${v.message ? heading("What they told us") + quote(v.message) : ""}
 function plain(v: VisitEmailInput, when: string, slot: string) {
   const lines = [
     `VISIT REQUEST — ${when}`,
-    slot,
+    `${slot} · ${reasonLabel(v.reason)}`,
     "",
     `${v.name} would like to visit the school.`,
     "Confirm the time with them — nothing is booked until you do.",
@@ -93,6 +97,7 @@ function plain(v: VisitEmailInput, when: string, slot: string) {
     `  Name    ${v.name}`,
     `  Email   ${v.email}`,
     `  Phone   ${v.phone}`,
+    `  About   ${reasonLabel(v.reason)}`,
   ];
 
   if (v.message) {

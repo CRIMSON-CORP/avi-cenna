@@ -77,6 +77,7 @@ await run(
     phone: "081 8444 5444",
     date,
     slot: "morning",
+    reason: "admission",
     message: "Two children, ages 6 and 9.",
   }),
 );
@@ -94,13 +95,19 @@ await run(
 
 console.log("\nrejected submissions\n");
 await run("visits (weekend)", visits, post("http://x/api/visits", {
-  name: "A", email: "a@b.com", phone: "1", date: "2026-09-12", slot: "morning",
+  name: "A", email: "a@b.com", phone: "1", date: "2026-09-12", slot: "morning", reason: "enquiry",
 }));
 await run("visits (past date)", visits, post("http://x/api/visits", {
-  name: "A", email: "a@b.com", phone: "1", date: "2020-01-06", slot: "morning",
+  name: "A", email: "a@b.com", phone: "1", date: "2020-01-06", slot: "morning", reason: "enquiry",
 }));
 await run("visits (bad slot)", visits, post("http://x/api/visits", {
-  name: "A", email: "a@b.com", phone: "1", date, slot: "midnight",
+  name: "A", email: "a@b.com", phone: "1", date, slot: "midnight", reason: "enquiry",
+}));
+await run("visits (no reason)", visits, post("http://x/api/visits", {
+  name: "A", email: "a@b.com", phone: "1", date, slot: "morning",
+}));
+await run("visits (bad reason)", visits, post("http://x/api/visits", {
+  name: "A", email: "a@b.com", phone: "1", date, slot: "morning", reason: "head-of-hogwarts",
 }));
 
 console.log("");
@@ -112,7 +119,7 @@ await run("applications (bot)", applications, post("http://x/api/applications", 
   [HONEYPOT]: "http://spam.example",
 }));
 await run("visits (bot)", visits, post("http://x/api/visits", {
-  name: "Bot", email: "bot@example.com", phone: "1", date, slot: "morning",
+  name: "Bot", email: "bot@example.com", phone: "1", date, slot: "morning", reason: "enquiry",
   [HONEYPOT]: "http://spam.example",
 }));
 await run("enquiries (bot)", enquiries, post("http://x/api/enquiries", {

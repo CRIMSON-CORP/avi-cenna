@@ -35,6 +35,7 @@ const visit = {
   phone: "081 8444 5444",
   date: "2026-09-15",
   slot: "morning",
+  reason: "head-of-primary",
   message: "Two children, ages 6 and 9. We would like to see the primary classrooms.",
   receivedAt: "2026-09-05T11:20:00.000Z",
 };

@@ -7,7 +7,7 @@
  */
 
 import { directions, site } from "@/lib/site";
-import { formatVisitDate, slotLabel } from "@/lib/visits";
+import { formatVisitDate, reasonLabel, slotLabel } from "@/lib/visits";
 import type { ApplicationEmailInput } from "./application";
 import type { EnquiryEmailInput } from "./enquiry";
 import type { VisitEmailInput } from "./visit";
@@ -94,7 +94,7 @@ export function visitReceipt(v: VisitEmailInput) {
   const body = `
 ${para(`Thank you, <strong style="color:${palette.navy};">${esc(firstName(v.name))}</strong>. We have your request to visit the school.`)}
 
-${panel({ label: "You asked for", title: when, chips: [slotLabel(v.slot)] })}
+${panel({ label: "You asked for", title: when, chips: [slotLabel(v.slot), reasonLabel(v.reason)] })}
 
 ${heading("This is not confirmed yet")}
 ${para("The office will call or write to agree a time with you, usually within a working day. Please wait for that before setting out — we would rather you did not make the journey on a day we cannot give you our attention.")}
@@ -116,7 +116,7 @@ ${signoff("If your plans change, just reply to this email and tell us.")}
     }),
     text: [
       `VISIT REQUEST RECEIVED — ${when}`,
-      slotLabel(v.slot),
+      `${slotLabel(v.slot)} · ${reasonLabel(v.reason)}`,
       "",
       `Thank you, ${firstName(v.name)}. We have your request to visit the school.`,
       "",

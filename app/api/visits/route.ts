@@ -4,7 +4,7 @@ import { looksAutomated } from "@/lib/spam";
 import { sendMail } from "@/lib/email/send";
 import { visitReceipt } from "@/lib/email/receipts";
 import { visitEmail } from "@/lib/email/visit";
-import { isVisitSlot, validateVisitDate, visitForm } from "@/lib/visits";
+import { isVisitReason, isVisitSlot, validateVisitDate, visitForm } from "@/lib/visits";
 
 /**
  * POST /api/visits — receives a request to visit the school and emails the
@@ -60,6 +60,7 @@ export async function POST(request: Request) {
   const phone = text(form, "phone");
   const date = text(form, "date");
   const slot = text(form, "slot");
+  const reason = text(form, "reason");
   const message = text(form, "message");
 
   const errors: Errors = {};
@@ -75,6 +76,9 @@ export async function POST(request: Request) {
   if (!slot) errors.slot = "Choose a morning or an afternoon.";
   else if (!isVisitSlot(slot)) errors.slot = "Choose a morning or an afternoon.";
 
+  if (!reason) errors.reason = "Tell us what the visit is about.";
+  else if (!isVisitReason(reason)) errors.reason = "Choose one of the listed options.";
+
   if (message.length > MESSAGE_MAX) errors.message = "That message is too long.";
 
   if (Object.keys(errors).length > 0) {
@@ -87,6 +91,7 @@ export async function POST(request: Request) {
     phone,
     date,
     slot,
+    reason,
     message: message || null,
     receivedAt: new Date().toISOString(),
   };
@@ -134,7 +139,7 @@ export async function POST(request: Request) {
     );
   }
 
-  console.info(`[visits] delivered ${date} ${slot} from ${email}`);
+  console.info(`[visits] delivered ${date} ${slot} (${reason}) from ${email}`);
 
   return NextResponse.json({ ok: true });
 }

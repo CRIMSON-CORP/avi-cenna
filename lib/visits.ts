@@ -46,6 +46,7 @@ export const visitForm = {
     phone: { label: "Phone number", placeholder: "081 8444 5444" },
     date: { label: "Preferred date", hint: "Weekdays only, from tomorrow onwards." },
     slot: { label: "Time of day" },
+    reason: { label: "What is the visit about?", placeholder: "Choose one" },
     message: { label: "Anything we should know", placeholder: "Ages of your children, which year group you are asking about, anything you would like to see." },
   },
   submit: "Request a visit",
@@ -81,6 +82,33 @@ export function slotLabel(value: string) {
 
 export function isVisitSlot(value: string): value is VisitSlot {
   return VISIT_SLOTS.some((s) => s.value === value);
+}
+
+/* --------------------------------------------------------------- REASON -- */
+/* Why they are coming, or who they are hoping to see. The office reads this
+   to work out who needs to be free, so it is a fixed list rather than free
+   text. Stored as slugs: the wording can be reworded later without making
+   nonsense of what has already been sent. */
+
+export type VisitReason = (typeof VISIT_REASONS)[number]["value"];
+
+export const VISIT_REASONS = [
+  { value: "enquiry", label: "Enquiry" },
+  { value: "admission", label: "Admission" },
+  { value: "eyfs-teacher", label: "EYFS teacher" },
+  { value: "primary-teacher", label: "Primary teacher" },
+  { value: "secondary-teacher", label: "Secondary teacher" },
+  { value: "principal", label: "Principal" },
+  { value: "head-of-primary", label: "Head of Primary" },
+  { value: "other", label: "Others" },
+] as const;
+
+export function isVisitReason(value: string): value is VisitReason {
+  return VISIT_REASONS.some((r) => r.value === value);
+}
+
+export function reasonLabel(value: string) {
+  return VISIT_REASONS.find((r) => r.value === value)?.label ?? value;
 }
 
 /* ---------------------------------------------------------------- DATES -- */

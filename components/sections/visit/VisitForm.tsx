@@ -2,6 +2,7 @@
 
 import { useMemo, useRef, useState } from "react";
 import {
+  VISIT_REASONS,
   VISIT_SLOTS,
   validateVisitDate,
   visitDateBounds,
@@ -156,6 +157,28 @@ export function VisitForm() {
                 placeholder={visitForm.fields.email.placeholder}
                 className={inputClass(errors.email)}
               />
+            </Field>
+
+            <Field
+              label={visitForm.fields.reason.label}
+              name="reason"
+              error={errors.reason}
+              className="sm:col-span-2"
+            >
+              <select
+                {...fieldProps("reason", errors.reason)}
+                defaultValue=""
+                className={cn(inputClass(errors.reason), "cursor-pointer")}
+              >
+                <option value="" disabled>
+                  {visitForm.fields.reason.placeholder}
+                </option>
+                {VISIT_REASONS.map((reason) => (
+                  <option key={reason.value} value={reason.value}>
+                    {reason.label}
+                  </option>
+                ))}
+              </select>
             </Field>
 
             <Field
