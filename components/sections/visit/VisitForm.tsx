@@ -7,6 +7,7 @@ import {
   visitDateBounds,
   visitForm,
 } from "@/lib/visits";
+import { Honeypot } from "@/components/ui/Honeypot";
 import { Reveal } from "@/components/ui/Reveal";
 import { cn } from "@/lib/utils";
 
@@ -55,7 +56,7 @@ export function VisitForm() {
       if (!response.ok) {
         /* Never reached the office, or rate limited. Not fixable by editing
            a field. */
-        if (response.status >= 500 || response.status === 429) {
+        if (response.status >= 500) {
           setFailure(result?.errors?.form ?? null);
           setStatus("error");
           return;
@@ -119,6 +120,8 @@ export function VisitForm() {
           noValidate
           className="mt-9 rounded-panel bg-surface p-7 sm:p-9 lg:mt-12"
         >
+          <Honeypot />
+
           <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
             <Field label={visitForm.fields.name.label} name="name" error={errors.name}>
               <input

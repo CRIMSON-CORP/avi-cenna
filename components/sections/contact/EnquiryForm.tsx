@@ -5,6 +5,7 @@ import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { enquiryForm } from "@/lib/contact";
 import { cn } from "@/lib/utils";
 import { ArrowIcon, CheckIcon } from "@/components/ui/icons";
+import { Honeypot } from "@/components/ui/Honeypot";
 
 /**
  * The enquiry form, in a glass card over the navy.
@@ -97,7 +98,7 @@ export function EnquiryForm() {
 
       if (!response.ok) {
         /* Mail host down, or rate limited. Not fixable by editing a field. */
-        if (response.status >= 500 || response.status === 429) {
+        if (response.status >= 500) {
           setFailure(result?.errors?.form ?? null);
           setStatus("failed");
           return;
@@ -165,6 +166,8 @@ export function EnquiryForm() {
             exit={{ opacity: 0 }}
             transition={{ duration: 0.5 }}
           >
+            <Honeypot />
+
             <h2 className="font-display text-[1.4rem] font-extrabold tracking-tight text-white">
               {enquiryForm.heading}
             </h2>

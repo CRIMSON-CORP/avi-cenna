@@ -103,4 +103,33 @@ await run("visits (bad slot)", visits, post("http://x/api/visits", {
   name: "A", email: "a@b.com", phone: "1", date, slot: "midnight",
 }));
 
+console.log("");
+console.log("honeypot — filled by a script, must answer 200 and send nothing");
+console.log("");
+const { HONEYPOT } = await import("@/lib/spam");
+await run("applications (bot)", applications, post("http://x/api/applications", {
+  name: "Bot", email: "bot@example.com", phone: "1", role: "igcse-english", cv,
+  [HONEYPOT]: "http://spam.example",
+}));
+await run("visits (bot)", visits, post("http://x/api/visits", {
+  name: "Bot", email: "bot@example.com", phone: "1", date, slot: "morning",
+  [HONEYPOT]: "http://spam.example",
+}));
+await run("enquiries (bot)", enquiries, post("http://x/api/enquiries", {
+  name: "Bot", email: "bot@example.com", phone: "1", subject: "s", message: "m",
+  [HONEYPOT]: "http://spam.example",
+}));
+
+console.log("");
+console.log("oversized body — rejected on the header, before the upload");
+console.log("");
+const fat = await applications(
+  new Request("http://x/api/applications", {
+    method: "POST",
+    headers: { "content-length": String(9 * 1024 * 1024) },
+    body: new FormData(),
+  }),
+);
+console.log(`applications (9MB)     ${fat.status}  ${JSON.stringify(await fat.json())}`);
+
 process.exit(0);

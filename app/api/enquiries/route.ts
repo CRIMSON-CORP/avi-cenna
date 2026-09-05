@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { enquiryEmail } from "@/lib/email/enquiry";
-import { clientIp, rateLimit } from "@/lib/rate-limit";
+import { looksAutomated } from "@/lib/spam";
 import { recipientFor } from "@/lib/email/recipients";
 import { enquiryReceipt } from "@/lib/email/receipts";
 import { sendMail } from "@/lib/email/send";
@@ -34,10 +34,6 @@ const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const MESSAGE_MAX = 4000;
 const SUBJECT_MAX = 200;
 
-/** 429 copy. Says what to do instead rather than only saying no. */
-const TOO_MANY =
-  "That is a lot of submissions from one connection in a short time. Wait a few minutes and try again, or call the school if it is urgent.";
-
 type Errors = Record<string, string>;
 
 function text(form: FormData, key: string) {
@@ -46,20 +42,6 @@ function text(form: FormData, key: string) {
 }
 
 export async function POST(request: Request) {
-  /* Before reading the body: a rejected request should not have cost us a
-     5MB upload. Unproxied there is no address to key on, and blocking every
-     submission is worse than allowing them. */
-  const ip = clientIp(request);
-  if (ip) {
-    const limit = rateLimit(`enquiries:${ip}`);
-    if (!limit.ok) {
-      return NextResponse.json(
-        { ok: false, errors: { form: TOO_MANY } },
-        { status: 429, headers: { "Retry-After": String(limit.retryAfter) } },
-      );
-    }
-  }
-
   let form: FormData;
   try {
     form = await request.formData();
@@ -68,6 +50,13 @@ export async function POST(request: Request) {
       { ok: false, errors: { form: "Could not read the submitted form." } },
       { status: 400 },
     );
+  }
+
+  /* Reported as a success on purpose. A bot told it failed will try another
+     shape; one told it worked moves on. Nothing is sent either way. */
+  if (looksAutomated(form)) {
+    console.info("[enquiries] discarded an automated submission");
+    return NextResponse.json({ ok: true });
   }
 
   const name = text(form, "name");

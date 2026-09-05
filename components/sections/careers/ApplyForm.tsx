@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { careersApply, careersVacancies, type Vacancy } from "@/lib/careers";
 import { RolePicker } from "./RolePicker";
+import { Honeypot } from "@/components/ui/Honeypot";
 import { Reveal } from "@/components/ui/Reveal";
 import { cn } from "@/lib/utils";
 
@@ -61,7 +62,7 @@ export function ApplyForm({ vacancies }: { vacancies: Vacancy[] }) {
         /* Nothing the applicant can fix by editing a field: the mail host is
            down, or they have hit the rate limit. Banner, and keep what they
            typed. */
-        if (response.status >= 500 || response.status === 429) {
+        if (response.status >= 500) {
           setFailure(result?.errors?.form ?? null);
           setStatus("error");
           return;
@@ -156,6 +157,8 @@ export function ApplyForm({ vacancies }: { vacancies: Vacancy[] }) {
           noValidate
           className="mt-9 rounded-panel bg-surface p-7 sm:p-9 lg:mt-12"
         >
+          <Honeypot />
+
           {/* grid-cols-1 explicitly: the implicit single column is sized
               `auto`, i.e. max-content, so it stretches to the full width of
               the card strip and drags the page's horizontal scrollbar with
