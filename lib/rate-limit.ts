@@ -46,20 +46,38 @@ function sweep(now: number) {
   }
 }
 
-/**
- * The client address, or null when it cannot be established.
- *
- * X-Forwarded-For is set by the client unless a proxy overwrites or appends
- * to it, so the LAST entry is the only one worth trusting — that is the hop
- * nginx added. Requires `proxy_set_header X-Forwarded-For
- * $proxy_add_x_forwarded_for;` in front of the app. Served directly with no
- * proxy, there is no header and this returns null.
- */
+/** How many proxies sit in front of the app. Only the entries our own proxies
+    appended are trustworthy — anyone can send an X-Forwarded-For of their own
+    invention. Apache alone is 1; a CDN in front of it is 2. Set it too low
+    behind a CDN and every visitor keys to the CDN's address, which rate-limits
+    the whole site as one person. */
+const TRUSTED_HOPS = Math.max(1, Number(process.env.TRUSTED_PROXY_HOPS ?? 1));
+
+let described = false;
+
+/** The client address, or null when it cannot be established. */
 export function clientIp(request: Request): string | null {
   const forwarded = request.headers.get("x-forwarded-for");
+  let ip: string | null = null;
+
   if (forwarded) {
     const hops = forwarded.split(",").map((h) => h.trim()).filter(Boolean);
-    if (hops.length > 0) return hops[hops.length - 1];
+    if (hops.length > 0) {
+      ip = hops[Math.max(0, hops.length - TRUSTED_HOPS)];
+    }
   }
-  return request.headers.get("x-real-ip")?.trim() || null;
+  ip ??= request.headers.get("x-real-ip")?.trim() || null;
+
+  /* Once per process, so the first real submission after a deploy says what
+     the proxy chain actually looks like and whether TRUSTED_PROXY_HOPS is
+     right. Guessing this from outside the server is not possible. */
+  if (!described) {
+    described = true;
+    console.info(
+      `[rate-limit] x-forwarded-for: ${forwarded ?? "(absent)"} ` +
+        `| TRUSTED_PROXY_HOPS=${TRUSTED_HOPS} -> ${ip ?? "(no address; limiter disabled)"}`,
+    );
+  }
+
+  return ip;
 }
