@@ -68,6 +68,13 @@ const SCATTER: Record<number, [number, number][]> = {
     [6, 47],
     [54, 51],
   ],
+  5: [
+    [1, 1],
+    [52, 7],
+    [6, 47],
+    [54, 51],
+    [25, 84],
+  ],
 };
 
 /** Integer hash rather than the usual sin-and-fract, which clusters badly over
@@ -83,11 +90,12 @@ function tilt(sign: number, amount: number) {
   return sign * (TILT_MIN + amount * (TILT_MAX - TILT_MIN));
 }
 
-/** Deterministic per index, so the server and the hydrating pass agree. The
-    sign alternates rather than being rolled: a pile that happens to lean one
-    way looks like a mistake, and with four cards that comes up often. */
+/** Deterministic per index, so the server and the hydrating pass agree.
+    The sign and amount are both derived from hashes to feel fully random,
+    avoiding the overly uniform look of strictly alternating tilts. */
 function seededTilt(seed: number, index: number) {
-  return tilt(index % 2 === 0 ? 1 : -1, hash(seed * 31 + index));
+  const sign = hash(seed * 17 + index) < 0.5 ? -1 : 1;
+  return tilt(sign, hash(seed * 31 + index));
 }
 
 function freshTilt() {

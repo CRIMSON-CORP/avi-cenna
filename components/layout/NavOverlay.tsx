@@ -282,43 +282,41 @@ function NavPanel({
           {/* sub-links column (desktop) */}
           <div className="hidden lg:block lg:flex-1 lg:pt-4">
             <AnimatePresence mode="wait">
-              <motion.div
-                key={activeSection.label}
-                initial={{ opacity: 0, y: 14 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -10 }}
-                transition={{ duration: 0.28, ease: [0.16, 1, 0.3, 1] }}
-                className="rounded-panel border border-brand-100 bg-surface/80 p-8 shadow-soft backdrop-blur"
-              >
-                <p className="text-[0.68rem] font-semibold uppercase tracking-[0.18em] text-brand-500">
-                  {activeSection.label}
-                </p>
-                {activeSection.children ? (
-                  <ul className="mt-5 flex flex-col gap-1">
-                    {activeSection.children.map((child, i) => (
-                      <motion.li
-                        key={child.href}
-                        initial={{ opacity: 0, x: -10 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        transition={{ delay: 0.06 + i * 0.04, duration: 0.32 }}
-                      >
-                        <Link
-                          href={child.href}
-                          onClick={onClose}
-                          className="focus-ring group flex items-center justify-between rounded-lg px-3 py-2.5 text-[0.95rem] text-ink-body transition-colors duration-fast hover:bg-brand-50 hover:text-ink"
-                        >
-                          {child.label}
-                          <ArrowIcon className="h-4 w-4 -translate-x-2 text-brand-500 opacity-0 transition-all duration-base ease-out-expo group-hover:translate-x-0 group-hover:opacity-100" />
-                        </Link>
-                      </motion.li>
-                    ))}
-                  </ul>
-                ) : (
-                  <p className="mt-5 text-[0.95rem] leading-relaxed text-ink-body">
-                    This section is being rebuilt — the page will land here shortly.
+              {activeSection.children && (
+                <motion.div
+                  key={activeSection.label}
+                  initial={{ opacity: 0, y: 14 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -10 }}
+                  transition={{ duration: 0.28, ease: [0.16, 1, 0.3, 1] }}
+                  className="rounded-panel border border-brand-100 bg-surface/80 p-8 shadow-soft backdrop-blur"
+                >
+                  <p className="text-[0.68rem] font-semibold uppercase tracking-[0.18em] text-brand-500">
+                    {activeSection.label}
                   </p>
-                )}
-              </motion.div>
+                  {activeSection.children && (
+                    <ul className="mt-5 flex flex-col gap-1">
+                      {activeSection.children.map((child, i) => (
+                        <motion.li
+                          key={child.href}
+                          initial={{ opacity: 0, x: -10 }}
+                          animate={{ opacity: 1, x: 0 }}
+                          transition={{ delay: 0.06 + i * 0.04, duration: 0.32 }}
+                        >
+                          <Link
+                            href={child.href}
+                            onClick={onClose}
+                            className="focus-ring group flex items-center justify-between rounded-lg px-3 py-2.5 text-[0.95rem] text-ink-body transition-colors duration-fast hover:bg-brand-50 hover:text-ink"
+                          >
+                            {child.label}
+                            <ArrowIcon className="h-4 w-4 -translate-x-2 text-brand-500 opacity-0 transition-all duration-base ease-out-expo group-hover:translate-x-0 group-hover:opacity-100" />
+                          </Link>
+                        </motion.li>
+                      ))}
+                    </ul>
+                  )}
+                </motion.div>
+              )}
             </AnimatePresence>
           </div>
         </div>

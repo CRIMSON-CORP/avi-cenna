@@ -63,9 +63,9 @@ export const aboutOverview = {
     body: "Our students are exposed to cultural differences early and are sensitised to various cultural nuances, thus equipping them to thrive in our shrinking global village.",
   },
   image: {
-    src: "/images/IMG_0013-scaled.jpg",
+    src: "/images/A-FUNDAY-477.webp",
     alt: "Avi-Cenna students together on the school grounds in Ikeja",
-    focal: "50% 45%",
+    focal: "50% 50%",
   },
 } as const;
 
@@ -163,7 +163,7 @@ export const aboutHistory = {
   },
   /** Swap for archive photographs when they are available. */
   image: {
-    src: "/images/DSC_4842-768x512.jpg",
+    src: "/images/AVICENNA-FUNDAY-(4).webp",
     alt: "The Avi-Cenna campus in GRA, Ikeja",
   },
 } as const;

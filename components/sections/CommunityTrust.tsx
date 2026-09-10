@@ -23,10 +23,10 @@ export function CommunityTrust() {
 
   // Duplicated for the seamless loop. The clone is hidden from assistive tech
   // so screen readers hear each accreditation once.
-  const lane = [
-    { items: affiliations, clone: false },
-    { items: affiliations, clone: true },
-  ];
+  // We also repeat the logos several times per half so the track is wider than
+  // any plausible screen. (4 logos is ~1200px; 4 repeats = ~4800px per half).
+  const SETS_PER_HALF = 4;
+  const halves = [{ isClone: false }, { isClone: true }];
 
   return (
     <section
@@ -58,29 +58,36 @@ export function CommunityTrust() {
           being sliced off by a hard edge. */}
       <div
         className="marquee group relative py-12 overflow-hidden mask-[linear-gradient(to_right,transparent,black_10%,black_90%,transparent)] lg:mt-16"
-        style={{ "--marquee-duration": "38s" } as React.CSSProperties}
+        style={{ "--marquee-duration": `${38 * SETS_PER_HALF}s` } as React.CSSProperties}
       >
         <ul className="marquee-track flex w-max items-stretch">
-          {lane.map(({ items, clone }) =>
-            items.map((item) => (
-              <li
-                key={`${clone ? "clone" : "orig"}-${item.id}`}
-                aria-hidden={clone || undefined}
-                className="px-3 sm:px-4"
-              >
-                <div className="flex h-24 w-56 items-center justify-center rounded-card border border-brand-100 bg-surface px-6 transition-all duration-base ease-out-expo hover:-translate-y-1 hover:border-brand-200 hover:shadow-card sm:h-28 sm:w-72">
-                  <div className="relative h-full w-full">
-                    <Image
-                      src={item.src}
-                      alt={clone ? "" : item.name}
-                      fill
-                      sizes="288px"
-                      className="object-contain py-4 opacity-80 grayscale transition-[filter,opacity] duration-slow ease-out-expo hover:opacity-100 hover:grayscale-0"
-                    />
-                  </div>
-                </div>
-              </li>
-            )),
+          {halves.map(({ isClone }) =>
+            Array.from({ length: SETS_PER_HALF }).map((_, setIndex) =>
+              affiliations.map((item) => {
+                // Only the very first sequence of logos should be read by screen readers.
+                const isScreenReaderVisible = !isClone && setIndex === 0;
+
+                return (
+                  <li
+                    key={`${isClone ? "clone" : "orig"}-${setIndex}-${item.id}`}
+                    aria-hidden={isScreenReaderVisible ? undefined : true}
+                    className="px-3 sm:px-4"
+                  >
+                    <div className="flex h-24 w-56 items-center justify-center rounded-card border border-brand-100 bg-surface px-6 transition-all duration-base ease-out-expo hover:-translate-y-1 hover:border-brand-200 hover:shadow-card sm:h-28 sm:w-72">
+                      <div className="relative h-full w-full">
+                        <Image
+                          src={item.src}
+                          alt={isScreenReaderVisible ? item.name : ""}
+                          fill
+                          sizes="288px"
+                          className="object-contain py-4 opacity-80 grayscale transition-[filter,opacity] duration-slow ease-out-expo hover:opacity-100 hover:grayscale-0"
+                        />
+                      </div>
+                    </div>
+                  </li>
+                );
+              }),
+            ),
           )}
         </ul>
       </div>

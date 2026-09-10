@@ -135,8 +135,8 @@ export const slides: Slide[] = [
     primary: { label: "Book a visit", href: site.bookVisit },
     secondary: { label: "Take the tour", action: "tour" },
     image: {
-      src: "/images/IMG_0435-2-scaled.jpg",
-      alt: "Four Avi-Cenna secondary students working together around a laptop in the school grounds",
+      src: "/images/hero-slider-frames/A-FUNDAY-358.webp",
+      alt: "Two Avi-Cenna secondary students posing for the camers",
       focal: "50% 58%",
     },
     proof: "Recognised by Cambridge Assessment International Education",
@@ -149,7 +149,7 @@ export const slides: Slide[] = [
     primary: { label: "Book a visit", href: site.bookVisit },
     secondary: { label: "Take the tour", action: "tour" },
     image: {
-      src: "/images/Av-web-pic-411-1536x1020.jpg",
+      src: "/images/hero-slider-frames/A-FUNDAY-490.webp",
       alt: "Avi-Cenna students talking and laughing together outside on the school grounds",
       focal: "55% 40%",
     },
@@ -163,7 +163,7 @@ export const slides: Slide[] = [
     primary: { label: "Take the tour", action: "tour" },
     secondary: { label: "Book a visit", href: site.bookVisit },
     image: {
-      src: "/images/IMG_1885-scaled.jpg",
+      src: "/images/hero-slider-frames/A-FUNDAY-539.webp",
       alt: "Avi-Cenna students together during a celebration in the school library",
       focal: "50% 52%",
     },
