@@ -45,7 +45,7 @@ const CORNERS: Corner[] = [
     colour: "text-brand-500",
     spin: 44,
     direction: 1,
-    delay: 0,
+    delay: 0.5,
   },
   {
     shape: 1,
@@ -53,7 +53,7 @@ const CORNERS: Corner[] = [
     colour: "text-accent-500",
     spin: 57,
     direction: -1,
-    delay: 0.1,
+    delay: 0.7,
   },
   {
     shape: 2,
@@ -61,7 +61,7 @@ const CORNERS: Corner[] = [
     colour: "text-gold-400",
     spin: 68,
     direction: 1,
-    delay: 0.2,
+    delay: 0.9,
   },
 ];
 
@@ -98,9 +98,7 @@ export function Blobs({ seed = 0 }: { seed?: number }) {
                content sits in a column between them. */
             animate={reduceMotion ? undefined : { rotate: corner.direction * 360 }}
             transition={
-              reduceMotion
-                ? undefined
-                : { duration: corner.spin, ease: "linear", repeat: Infinity }
+              reduceMotion ? undefined : { duration: corner.spin, ease: "linear", repeat: Infinity }
             }
           >
             <Blob seed={roll + corner.shape * 17} colour={corner.colour} />
