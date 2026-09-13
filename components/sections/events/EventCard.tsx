@@ -14,7 +14,7 @@ export function EventCard({ event, onSelectDetails, onSelectRsvp }: EventCardPro
   return (
     <article
       className={cn(
-        "group relative flex flex-col overflow-hidden rounded-card border border-brand-100/90 bg-surface p-4 sm:p-6",
+        "group relative flex flex-col overflow-hidden rounded-card border border-brand-100/90 bg-surface p-3 sm:p-4",
         "transition-[translate,transform,box-shadow,border-color] duration-base ease-out-expo",
         "hover:-translate-y-1 hover:border-brand-300 hover:shadow-card",
         "lg:flex-row lg:items-center lg:gap-8",

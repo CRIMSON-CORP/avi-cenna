@@ -52,8 +52,8 @@ export function Footer() {
           <Logo />
 
           <p className="mt-4 max-w-xs text-[0.9rem] leading-relaxed text-ink-body">
-            An independent, secular day and boarding school for boys and girls
-            aged 2½ to 16 in Ikeja, Lagos.
+            An independent, secular day and boarding school for boys and girls aged 2½ to 16 in
+            Ikeja, Lagos.
           </p>
 
           <div className="mt-6 flex items-center gap-2">
@@ -82,9 +82,7 @@ export function Footer() {
         <div className="lg:col-span-3">
           <FooterHeading>Contact us</FooterHeading>
           <address className="mt-4 flex flex-col gap-3 not-italic">
-            <span className="text-[0.9rem] leading-relaxed text-ink-body">
-              {site.address}
-            </span>
+            <span className="text-[0.9rem] leading-relaxed text-ink-body">{site.address}</span>
             {site.phones.map((phone) => (
               <a
                 key={phone}
@@ -117,7 +115,7 @@ export function Footer() {
           <FooterHeading>Quick links</FooterHeading>
           <ul className="mt-4 flex flex-col gap-2.5">
             {quickLinks.map((link) => (
-              <li key={link.href}>
+              <li key={link.label}>
                 <FooterLink href={link.href}>{link.label}</FooterLink>
               </li>
             ))}
@@ -131,7 +129,7 @@ export function Footer() {
             {navigation
               .filter((section) => section.href !== "/")
               .map((section) => (
-                <li key={section.href}>
+                <li key={section.label}>
                   <FooterLink href={section.href}>{section.label}</FooterLink>
                 </li>
               ))}
@@ -156,9 +154,7 @@ export function Footer() {
 
 function FooterHeading({ children }: { children: React.ReactNode }) {
   return (
-    <h2 className="text-[0.68rem] font-bold uppercase tracking-[0.18em] text-ink">
-      {children}
-    </h2>
+    <h2 className="text-[0.68rem] font-bold uppercase tracking-[0.18em] text-ink">{children}</h2>
   );
 }
 

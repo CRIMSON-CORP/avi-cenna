@@ -199,7 +199,10 @@ function NavPanel({
                         overview page as its first child. */}
                     <Link
                       href={section.href}
-                      onClick={onClose}
+                      onClick={(e) => {
+                        if (section.href === "#") e.preventDefault();
+                        onClose();
+                      }}
                       onMouseEnter={() => setActive(index)}
                       onFocus={() => setActive(index)}
                       className={cn(

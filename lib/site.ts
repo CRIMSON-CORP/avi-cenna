@@ -98,8 +98,8 @@ export const navigation: NavSection[] = [
       { label: "Uniform", href: "/admissions/uniform" },
     ],
   },
-  { label: "Student Life", href: "/student-life" },
-  { label: "Facilities", href: "/facilities" },
+  { label: "Student Life", href: "#" },
+  { label: "Facilities", href: "#" },
   { label: "Contact", href: "/contact" },
 ];
 
@@ -325,12 +325,12 @@ export const affiliations: Affiliation[] = [
 
 /** The "Quick Links" column from the current site's footer. */
 export const quickLinks: NavLink[] = [
-  { label: "Frequently Asked Questions", href: "/faq" },
-  { label: "PTA", href: "/pta" },
-  { label: "School Anthem", href: "/about/school-anthem" },
-  { label: "Excursions", href: "/student-life/excursions" },
-  { label: "Events", href: "/student-life/events" },
-  { label: "Awards", href: "/student-life/awards" },
+  { label: "Frequently Asked Questions", href: "#" },
+  { label: "PTA", href: "/about/pta" },
+  { label: "School Anthem", href: "/about#anthem" },
+  { label: "Excursions", href: "#" },
+  { label: "Events", href: "/events" },
+  { label: "Awards", href: "#" },
 ];
 
 /** The dated notice the current site carries on its homepage. */
