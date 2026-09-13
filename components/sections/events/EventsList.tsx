@@ -35,7 +35,7 @@ export function EventsList() {
 
         {/* Filter bar */}
         <Reveal y={16}>
-          <div className="rounded-2xl border border-brand-100 bg-surface sm:p-4">
+          <div className="rounded-2xl border border-brand-100 bg-surface p-4">
             <EventsFilterBar
               activeFilter={activeFilter}
               onFilterChange={setActiveFilter}
