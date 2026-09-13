@@ -260,7 +260,7 @@ function NavPanel({
                             >
                               <ul className="flex flex-col gap-0.5 pb-3 pl-8">
                                 {section.children.map((child) => (
-                                  <li key={child.href}>
+                                  <li key={child.label}>
                                     <Link
                                       href={child.href}
                                       onClick={onClose}
@@ -301,7 +301,7 @@ function NavPanel({
                     <ul className="mt-5 flex flex-col gap-1">
                       {activeSection.children.map((child, i) => (
                         <motion.li
-                          key={child.href}
+                          key={child.label}
                           initial={{ opacity: 0, x: -10 }}
                           animate={{ opacity: 1, x: 0 }}
                           transition={{ delay: 0.06 + i * 0.04, duration: 0.32 }}
@@ -334,7 +334,7 @@ function NavPanel({
           <div className="shell flex flex-col gap-5 py-6 lg:flex-row lg:items-center lg:justify-between">
             <ul className="flex flex-wrap items-center gap-x-5 gap-y-2">
               {utilityLinks.map((link) => (
-                <li key={link.href}>
+                <li key={link.label}>
                   <a
                     href={link.href}
                     target="_blank"

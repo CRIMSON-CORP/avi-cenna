@@ -75,7 +75,7 @@ export function StageStrip() {
             const theme = themes[i % themes.length];
             return (
               <motion.li
-                key={stage.href}
+                key={stage.label}
                 initial={reduceMotion ? false : { opacity: 0, y: 28 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true, margin: "-60px" }}
