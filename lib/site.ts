@@ -336,8 +336,8 @@ export const quickLinks: NavLink[] = [
 /** The dated notice the current site carries on its homepage. */
 export const termNotice = {
   eyebrow: "Next term",
-  title: "Second Term Begins",
-  date: "Monday 5 January",
+  title: "First Term Begins",
+  date: "Monday 7th September",
   cta: { label: "Make an enquiry", href: site.bookVisit },
 };
 
